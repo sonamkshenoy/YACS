@@ -5,8 +5,6 @@ import threading
 import time
 import datetime
 
-# from queue import Queue
-
 from allConfigs import *
 
 """
@@ -20,7 +18,6 @@ Worker configs:
 # Worker variables
 totalNumSlots = 0
 freeSlotsNum = totalNumSlots
-# queueOfTasks = Queue()
 
 
 # THREAD 1: LISTENS TO TASKS TO EXECUTE (ACTS AS CLIENT)
@@ -32,12 +29,10 @@ def listenToTasks():
     workersocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     workersocket.bind((WORKER_IP, WORKER_PORT))
     workersocket.listen()
+
     
     while True:
         (mastersocket, address) = workersocket.accept()
-
-        # if(freeSlotsNum <= 0):
-        #     return("No available slots")
 
         while True:
 
@@ -49,9 +44,21 @@ def listenToTasks():
                 # print('Master disconnected')
                 break
 
+            # Return "Slots not available" if no free slots, so that master can re-allot task
+            print(freeSlotsNum)
+
+            if(freeSlotsNum <= 0):
+                mastersocket.send(SLOTS_NOT_AVAILABLE.encode())
+                mastersocket.close()
+                break
+
+            else:
+                mastersocket.send(SLOTS_AVAILABLE.encode())
+
+
             task = json.loads(data)
-            
-            # mastersocket.send(b"Received request successfully")
+                
+                # mastersocket.send(b"Received request successfully")
 
 
             # Allot task by creating new thread (thread = slot)
@@ -91,7 +98,7 @@ def executeTaskAndUpdateMaster(task_id, durationOfTask):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
         s.connect((MASTER_IP, MASTER_UPDATE_PORT))
-        message = json.dumps({"taskid": task_id})
+        message = json.dumps({"taskid": task_id, "numFreeSlots": (WORKER_PORT, freeSlotsNum)})
         s.send(message.encode())
 
     # Current slot now becomes free

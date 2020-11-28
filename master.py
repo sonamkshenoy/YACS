@@ -18,6 +18,7 @@ queueOfReduceRequests = Queue()
 allPorts = []
 tasksInProcess = {} # Keeps record of jobs whose map tasks are still running
 lastUsedWorkerPortIndex = 0 # Used only for Round Robin Scheduling
+numFreeSlotsInAllMachines = {}
 
 # THREAD 1: LISTENS TO REQUESTS (ACTS AS CLIENT)
 
@@ -70,13 +71,16 @@ def getWorkerId():
     if(SCHEDULING_ALGO == "R"):
         return(random.choice(allPorts))
 
+    # Round Robin selection
     elif(SCHEDULING_ALGO == "RR"):
         firstAvailablePortIndex = lastUsedWorkerPortIndex
         lastUsedWorkerPortIndex = (lastUsedWorkerPortIndex + 1) % len(allPorts)
         return(allPorts[firstAvailablePortIndex])
 
+    # Least Loaded selection
     else:
-        pass
+        print(numFreeSlotsInAllMachines)
+        return 4000
 
     
 # THREAD 2 : SCHEDULES TASKS - both map and reduce (ACTS AS SERVER)
@@ -117,18 +121,36 @@ def scheduleRequest():
                 # Now allot the map task to a worker machine
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
-                    # Get machine to execute according to chosen scheduling algorithm
-                    selectedWorker = getWorkerId()
+                    machine_not_available = True
 
-                    print("Allotting task", task, "to", selectedWorker)
-                    s.connect((WORKER_IP, selectedWorker))
+                    while(machine_not_available):
+                        # Get machine to execute according to chosen scheduling algorithm
+                        selectedWorker = getWorkerId()
 
-                    # Send task
-                    message= json.dumps(task)
-                    s.send(message.encode())
+                        print("Try allotting task", task, "to", selectedWorker)
+                        s.connect((WORKER_IP, selectedWorker))
 
-                    # Mark the sent map task of current job as "executing"
-                    tasksInProcess[job_id]["mapTasks"].append(task["task_id"])
+                        
+                        # Send task
+                        message= json.dumps(task)
+                        s.send(message.encode())
+
+
+                        # If worker returned "Available" i.e. slots available, then go to schedule next task, else try another machine for same task
+                        if(s.recv(4096).decode()==SLOTS_NOT_AVAILABLE):
+                            s.close()
+                            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                            continue
+
+                        else:
+                            machine_not_available = False
+                            print("Allotted task", task, "to", selectedWorker)
+
+
+                        # Mark the sent map task of current job as "executing"
+                        tasksInProcess[job_id]["mapTasks"].append(task["task_id"])
+
+                        
 
             tasksInProcess[job_id]["reduceTasks"] = reduceTasks
 
@@ -163,6 +185,7 @@ def listenToUpdatesFromWorker():
 
     global tasksInProcess
     global queueOfReduceRequests
+    global numFreeSlotsInAllMachines
 
 
     # Set up socket
@@ -185,6 +208,9 @@ def listenToUpdatesFromWorker():
 
             # Get the update from worker (and hence the task id of the map task that finished executing)
             update = json.loads(data)
+
+            # Update number of free slots on that machine
+            numFreeSlotsInAllMachines[update["numFreeSlots"][0]] = update["numFreeSlots"][1]
 
             task_id = update["taskid"]
 
@@ -254,6 +280,7 @@ if __name__ == "__main__":
 
     for config in configs:
         allPorts.append(config["port"])
+        numFreeSlotsInAllMachines[config["port"]] = config["slots"]
 
 
     print("\n\n----------REQUESTS BEGIN------------\n")
