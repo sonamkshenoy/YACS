@@ -5,3 +5,5 @@
 
 # TODO
 1. Add semaphores for global variables shared between threads
+2. Check if slots available before sending task
+3. 3 types of scheduling algos

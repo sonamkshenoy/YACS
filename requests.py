@@ -20,7 +20,7 @@ def create_job_request(job_id):
 
 def send_request(job_request):
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-		s.connect(("localhost", MASTER_PORT))
+		s.connect((MASTER_IP, MASTER_SCHEDULING_PORT))
 		message=json.dumps(job_request)
 		#send task
 		s.send(message.encode())

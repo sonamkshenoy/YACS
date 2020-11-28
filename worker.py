@@ -1,6 +1,12 @@
-import socket
-import json
 import sys
+import json
+import socket
+import threading
+import time
+import datetime
+
+# from queue import Queue
+
 from allConfigs import *
 
 """
@@ -14,12 +20,15 @@ Worker configs:
 # Worker variables
 totalNumSlots = 0
 freeSlotsNum = totalNumSlots
-queueOfTasks = Queue()
+# queueOfTasks = Queue()
 
 
 # THREAD 1: LISTENS TO TASKS TO EXECUTE (ACTS AS CLIENT)
 
 def listenToTasks():
+
+    global freeSlotsNum
+
     workersocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     workersocket.bind((WORKER_IP, WORKER_PORT))
     workersocket.listen()
@@ -37,7 +46,7 @@ def listenToTasks():
             if(len(data) == 0):
 
                 mastersocket.close()
-                print('Master disconnected')
+                # print('Master disconnected')
                 break
 
             task = json.loads(data)
@@ -45,32 +54,47 @@ def listenToTasks():
             # mastersocket.send(b"Received request successfully")
 
 
-            # Allot task
-            t = threading.Thread(target = executeTask, args=({taskid: task["task_id"]}))
+            # Allot task by creating new thread (thread = slot)
+            # Pass task_id and duration to thread (slot)
+            # info = {
+            taskid = task["task_id"]
+            duration = task["duration"]
+            # }
+
+            t = threading.Thread(target = executeTaskAndUpdateMaster, args=(taskid, duration))
             t.start()
+
+            # Number of available slots decreases by one
             freeSlotsNum -= 1
 
 
 # THREAD 2: EXECUTES TASKS AND UPDATES MASTER ABOUT THIS
 
-def executeTaskAndUpdateMaster(task_id):
+def executeTaskAndUpdateMaster(task_id, durationOfTask):
+    global freeSlotsNum
 
-    durationOfTask = int(newTaskRequest["duration"])
+    print("Started execution of", task_id, "with duration", durationOfTask)
 
     # Execute task of x duration
     while(durationOfTask):
+        # Reduce remaining task by 1 after 1 second (simulate passing of 1 second using time.sleep())
+
+        # Can check if reducing after 1 second (of course variations in milliseconds) with following line:
+        # print(datetime.datetime.now())
+
+        time.sleep(1) 
         durationOfTask -= 1
 
-    # Once duration of task done
+    print("Finished execution of", task_id)
+
+    # Once duration of task done, update master
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
-        # Random selection of machine
-        selectedWorker = random.choice(allPorts)
-        print("Allotting task", task, "to", selectedWorker)
-        s.connect(("localhost", MASTER_UPDATE_PORT))
-        message = jsong.dumps({taskid: task_id})
+        s.connect((MASTER_IP, MASTER_UPDATE_PORT))
+        message = json.dumps({"taskid": task_id})
         s.send(message.encode())
 
+    # Current slot now becomes free
     freeSlotsNum += 1
 
      
@@ -108,7 +132,7 @@ if __name__ == "__main__":
         sys.exit(0)
 
     # WORKER_ID = WORKER_CONFIG["worker_id"]
-    totalNumSlots = int(WORKER_CONFIG["slots"])
+    totalNumSlots = WORKER_CONFIG["slots"]
     freeSlotsNum = totalNumSlots
 
 
@@ -116,10 +140,10 @@ if __name__ == "__main__":
 
     try:
         t1 = threading.Thread(target = listenToTasks)
-        t2 = threading.Thread(target = allotTasks)
+        # t2 = threading.Thread(target = allotTasks)
 
         t1.start()
-        t2.start()
+        # t2.start()
 
         # We don't want to join (stop master till threads finish executing, they don't stop executing)
 
