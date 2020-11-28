@@ -4,6 +4,7 @@ import time
 import sys
 import random
 import numpy as np
+from allConfigs import *
 
 def create_job_request(job_id):
 	number_of_map_tasks=random.randrange(1,5)
@@ -19,7 +20,7 @@ def create_job_request(job_id):
 
 def send_request(job_request):
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-		s.connect(("localhost", 5000))
+		s.connect(("localhost", MASTER_PORT))
 		message=json.dumps(job_request)
 		#send task
 		s.send(message.encode())
