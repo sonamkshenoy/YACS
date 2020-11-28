@@ -1,3 +1,7 @@
 1. Socket functions: https://docs.python.org/3/howto/sockets.html
 2. JSON functions: https://www.w3schools.com/python/python_json.asp
 3. Queue functions: https://docs.python.org/3/library/queue.html
+
+
+# TODO
+1. Add semaphores for global variables shared between threads
