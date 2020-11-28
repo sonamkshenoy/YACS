@@ -17,6 +17,7 @@ queueOfRequests = Queue()
 queueOfReduceRequests = Queue()
 allPorts = []
 tasksInProcess = {} # Keeps record of jobs whose map tasks are still running
+lastUsedWorkerPortIndex = 0 # Used only for Round Robin Scheduling
 
 # THREAD 1: LISTENS TO REQUESTS (ACTS AS CLIENT)
 
@@ -61,6 +62,22 @@ def listenRequest():
 
 
 
+def getWorkerId():
+
+    global lastUsedWorkerPortIndex
+
+    # Random selection of machine
+    if(SCHEDULING_ALGO == "R"):
+        return(random.choice(allPorts))
+
+    elif(SCHEDULING_ALGO == "RR"):
+        firstAvailablePortIndex = lastUsedWorkerPortIndex
+        lastUsedWorkerPortIndex = (lastUsedWorkerPortIndex + 1) % len(allPorts)
+        return(allPorts[firstAvailablePortIndex])
+
+    else:
+        pass
+
     
 # THREAD 2 : SCHEDULES TASKS - both map and reduce (ACTS AS SERVER)
 # New thread since we don't want scheduling to block listening to events
@@ -100,8 +117,9 @@ def scheduleRequest():
                 # Now allot the map task to a worker machine
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
-                    # Random selection of machine
-                    selectedWorker = random.choice(allPorts)
+                    # Get machine to execute according to chosen scheduling algorithm
+                    selectedWorker = getWorkerId()
+
                     print("Allotting task", task, "to", selectedWorker)
                     s.connect((WORKER_IP, selectedWorker))
 
@@ -128,8 +146,8 @@ def scheduleRequest():
                 # Now allot the task to a worker machine
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
-                    # Random selection of machine
-                    selectedWorker = random.choice(allPorts)
+                    selectedWorker = getWorkerId()
+
                     print("Allotting task", task, "to", selectedWorker)
                     s.connect((WORKER_IP, selectedWorker))
 
