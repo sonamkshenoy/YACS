@@ -1,0 +1,31 @@
+{
+	'job_id': '4', 
+	'map_tasks': [
+		{
+			'task_id': '4_M0', 
+			'duration': 3
+		}, 
+		{
+			'task_id': '4_M1', 
+			'duration': 2
+		}, 
+		{
+			'task_id': '4_M2', 
+			'duration': 3
+		}, 
+		{
+			'task_id': '4_M3', 
+			'duration': 1
+		}
+	], 
+	'reduce_tasks': [
+		{
+			'task_id': '4_R0', 
+			'duration': 4
+		}, 
+		{
+			'task_id': '4_R1', 
+			'duration': 1
+		}
+	]
+}

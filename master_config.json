@@ -1,19 +1,19 @@
 {
-  "Workers": [
+  "workers": [
     {
-      "worker_id": "worker1",
+      "worker_id": 1,
       "slots": 5,
-      "port": 6000
+      "port": 4000
     },
     {
-      "worker_id": "worker2",
-      "slots": 8,
-      "port": 6001
-    },
-    {
-      "worker_id": "worker3",
+      "worker_id": 2,
       "slots": 7,
-      "port": 6002
+      "port": 4001
+    },
+    {
+      "worker_id": 3,
+      "slots": 3,
+      "port": 4002
     }
   ]
 }
