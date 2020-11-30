@@ -74,6 +74,13 @@ def listenToTasks():
             # Number of available slots decreases by one
             freeSlotsNum -= 1
 
+            # Once duration of task done, update master
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+
+                s.connect((MASTER_IP, MASTER_UPDATE_PORT))
+                message = json.dumps({NUMFREESLOTS: (WORKER_PORT, freeSlotsNum), TYPETASK: FREESLOTUPDATE})
+
+
 
 # THREAD 2: EXECUTES TASKS AND UPDATES MASTER ABOUT THIS
 
@@ -98,13 +105,28 @@ def executeTaskAndUpdateMaster(task_id, durationOfTask):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
         s.connect((MASTER_IP, MASTER_UPDATE_PORT))
-        message = json.dumps({"taskid": task_id, "numFreeSlots": (WORKER_PORT, freeSlotsNum)})
+        message = json.dumps({NUMFREESLOTS: (WORKER_PORT, freeSlotsNum), "taskid": task_id, TYPETASK: TASKEXEC_AND_FREESLOTUPDATE})
         s.send(message.encode())
 
     # Current slot now becomes free
     freeSlotsNum += 1
 
-     
+
+
+"""
+# THREAD 3: SENDS HEARTBEATS ABOUT NUMBER OF FREE SLOTS TO MASTER
+
+def sendHeartbeats():
+
+    while(True):    
+        print("Sending...")        
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+
+            s.connect((MASTER_IP, MASTER_UPDATE_PORT))
+            message = json.dumps({"typeTask": HEARTBEAT, "numFreeSlots": (WORKER_PORT, freeSlotsNum)})
+            s.send(message.encode())
+        time.sleep(0.001)
+"""     
 
 
 # MAIN FUNCTION   
@@ -147,7 +169,7 @@ if __name__ == "__main__":
 
     try:
         t1 = threading.Thread(target = listenToTasks)
-        # t2 = threading.Thread(target = allotTasks)
+        # t2 = threading.Thread(target = sendHeartbeats)
 
         t1.start()
         # t2.start()

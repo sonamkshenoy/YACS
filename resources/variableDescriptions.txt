@@ -1,0 +1,56 @@
+
+queueOfRequests and queueOfReduceRequests = [
+    <jobId>:{
+
+        # map_tasks key not there for queueOfReduceRequests
+        'map_tasks': [
+            {
+                'task_id': <maptaskid2>, 
+                'duration': <time>
+            }, 
+            {
+                'task_id': <maptaskid2>, 
+                'duration': <time>
+            }
+        ],
+        'reduce_tasks': [
+            {
+                'task_id': <reducetaskid2>, 
+                'duration': <time>
+            }, 
+            {
+                'task_id': <reducetaskid2>, 
+                'duration': <time>
+            }
+        ]
+    }
+]
+
+
+tasksInProcess = {
+    <jobId>:{
+        "mapTasks":[
+            <maptaskid1>, 
+            <maptaskid2>
+        ],
+        'reduceTasks': [
+            {
+                'task_id': <reducetaskid2>, 
+                'duration': <time>
+            }, 
+            {
+                'task_id': <reducetaskid2>, 
+                'duration': <time>
+            }
+        ]
+    }
+}
+
+numFreeSlotsInAllMachines = {
+    <portNumber>:<freeSlotsOnMachine>, 
+    <portNumber>:<freeSlotsOnMachine>
+}
+
+maxFreeSlotsMachine = {
+    <portNumber>:<freeSlotsOnMachine>
+}

@@ -3,13 +3,14 @@ import socket
 import threading
 import json
 import random
+import time
 
 from queue import Queue
 
 from allConfigs import *
 
 
-# Initialise to "random"
+# Initialise scheduling algo to "random"
 SCHEDULING_ALGO = "R"
 
 
@@ -19,6 +20,8 @@ allPorts = []
 tasksInProcess = {} # Keeps record of jobs whose map tasks are still running
 lastUsedWorkerPortIndex = 0 # Used only for Round Robin Scheduling
 numFreeSlotsInAllMachines = {}
+maxFreeSlotsMachine = {} # Used only for Least Loaded Machine
+maxFreeSlots = 0
 
 # THREAD 1: LISTENS TO REQUESTS (ACTS AS CLIENT)
 
@@ -63,6 +66,7 @@ def listenRequest():
 
 
 
+# Returns port number of worker depending on scheduling algo
 def getWorkerId():
 
     global lastUsedWorkerPortIndex
@@ -79,8 +83,11 @@ def getWorkerId():
 
     # Least Loaded selection
     else:
-        print(numFreeSlotsInAllMachines)
-        return 4000
+        # If max free slots is 0, sleep for 1 second till it finds one
+        while(maxFreeSlots <= 0):
+            time.sleep(1)
+        # print(numFreeSlotsInAllMachines)
+        return maxFreeSlotsMachine["port"]
 
     
 # THREAD 2 : SCHEDULES TASKS - both map and reduce (ACTS AS SERVER)
@@ -114,7 +121,14 @@ def scheduleRequest():
 
             # Create an entry for current job in "executing"
             tasksInProcess[job_id] = {"mapTasks":[], "reduceTasks":[]}
-            
+
+            # Mark the sent map task of current job as "executing"
+            tasksInProcess[job_id]["mapTasks"] = [list(x.keys())[0] for x in mapTasks]
+            tasksInProcess[job_id]["reduceTasks"] = reduceTasks
+            print(tasksInProcess)
+
+
+
 
             for task in mapTasks:
 
@@ -127,7 +141,7 @@ def scheduleRequest():
                         # Get machine to execute according to chosen scheduling algorithm
                         selectedWorker = getWorkerId()
 
-                        print("Try allotting task", task, "to", selectedWorker)
+                        print("Try allotting task", task, "to", selectedWorker, "since" ,numFreeSlotsInAllMachines)
                         s.connect((WORKER_IP, selectedWorker))
 
                         
@@ -147,13 +161,6 @@ def scheduleRequest():
                             print("Allotted task", task, "to", selectedWorker)
 
 
-                        # Mark the sent map task of current job as "executing"
-                        tasksInProcess[job_id]["mapTasks"].append(task["task_id"])
-
-                        
-
-            tasksInProcess[job_id]["reduceTasks"] = reduceTasks
-
 
         # Execute only reduce tasks (if present)
         # These are added to reduceQueue only once all map tasks belonging to that job have completed executing
@@ -168,17 +175,33 @@ def scheduleRequest():
                 # Now allot the task to a worker machine
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
-                    selectedWorker = getWorkerId()
+                    machine_not_available = True
 
-                    print("Allotting task", task, "to", selectedWorker)
-                    s.connect((WORKER_IP, selectedWorker))
+                    while(machine_not_available):
+                        # Get machine to execute according to chosen scheduling algorithm
+                        selectedWorker = getWorkerId()
 
-                    # Send task
-                    message= json.dumps(task)
-                    s.send(message.encode())
+                        print("Try allotting task", task, "to", selectedWorker)
+
+                        s.connect((WORKER_IP, selectedWorker))
+
+                        # Send task
+                        message= json.dumps(task)
+                        s.send(message.encode())
+
+                        if(s.recv(4096).decode()==SLOTS_NOT_AVAILABLE):
+                            s.close()
+                            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                            continue
+
+                        else:
+                            machine_not_available = False
+                            print("Allotted task", task, "to", selectedWorker)
 
 
-# THREAD 3 : LISTENS TO UPDATES FROM WORKERS
+
+
+# THREAD 3 : LISTENS TO UPDATES AND HEARTBEATS FROM WORKERS
 
 
 def listenToUpdatesFromWorker():
@@ -186,6 +209,8 @@ def listenToUpdatesFromWorker():
     global tasksInProcess
     global queueOfReduceRequests
     global numFreeSlotsInAllMachines
+    global maxFreeSlotsMachine
+    global maxFreeSlots
 
 
     # Set up socket
@@ -209,33 +234,52 @@ def listenToUpdatesFromWorker():
             # Get the update from worker (and hence the task id of the map task that finished executing)
             update = json.loads(data)
 
+            # Extract if task is to listen for heartbeat only or that plus "map task execution done" update
+            typeOfTask = update[TYPETASK]
+
             # Update number of free slots on that machine
-            numFreeSlotsInAllMachines[update["numFreeSlots"][0]] = update["numFreeSlots"][1]
+            numFreeSlotsInAllMachines[update[NUMFREESLOTS][0]] = update[NUMFREESLOTS][1]
 
-            task_id = update["taskid"]
 
-            job_id = None
+            maxFreeSlots = 0
 
-            # Search the job the task belongs to and mark it as "no more executing" (by deleting its entry)
-            for executingJob in tasksInProcess:
-                if(task_id in tasksInProcess[executingJob]["mapTasks"]):
-                    job_id = executingJob
-                    tasksInProcess[executingJob]["mapTasks"].remove(task_id)
+            for machine in numFreeSlotsInAllMachines:
+                if(numFreeSlotsInAllMachines[machine] > maxFreeSlots):
+                    maxFreeSlotsMachine["port"] = machine
+                    maxFreeSlotsMachine["numFreeSlots"] = numFreeSlotsInAllMachines[machine]
+                    maxFreeSlots = numFreeSlotsInAllMachines[machine]
+
+            # print("max free slots in", maxFreeSlotsMachine, "with", maxFreeSlots)
+
+
+            # Execution update
+            if(typeOfTask == TASKEXEC_AND_FREESLOTUPDATE):
+
+                task_id = update["taskid"]
+
+                job_id = None
+
+                # Search the job the task belongs to and mark it as "no more executing" (by deleting its entry)
+                for executingJob in tasksInProcess:
+                    if(task_id in tasksInProcess[executingJob]["mapTasks"]):
+                        job_id = executingJob
+                        tasksInProcess[executingJob]["mapTasks"].remove(task_id)
+                        break
+
+                # If job_id is not initialised (Should ideally never come to this condition, yet handle)
+                if not job_id:
                     break
 
-            # If job_id is not initialised (Should ideally never come to this condition, yet handle)
-            if not job_id:
-                break
+                # If all map tasks of this job id have finished executing, remove this record (job) from "executing" list and add to the reduce task queue
+                if(len(tasksInProcess[job_id]["mapTasks"]) <= 0):
+                    # print("All map tasks of jobs", job_id, "done")
+                    poppedJob = tasksInProcess.pop(job_id)
 
-            # If all map tasks of this job id have finished executing, remove this record (job) from "executing" list and add to the reduce task queue
-            if(len(tasksInProcess[job_id]["mapTasks"]) <= 0):
-                # print("All map tasks of jobs", job_id, "done")
-                poppedJob = tasksInProcess.pop(job_id)
-
-                # Push all reduce tasks belonging to that job in queue to be executed (reduce tasks can be executed parallelly)                     
-                queueOfReduceRequests.put(poppedJob["reduceTasks"])
+                    # Push all reduce tasks belonging to that job in queue to be executed (reduce tasks can be executed parallelly)                     
+                    queueOfReduceRequests.put(poppedJob["reduceTasks"])
 
 
+            print("Free Slots", numFreeSlotsInAllMachines)
 
 
 
@@ -278,9 +322,19 @@ if __name__ == "__main__":
     configs = json.loads(configs)
     configs = configs[MAINKEYINCONFIG]
 
+
+    maxFreeSlots = 0
+
     for config in configs:
         allPorts.append(config["port"])
         numFreeSlotsInAllMachines[config["port"]] = config["slots"]
+
+        # Update if this machine has the maximum number of slots (used for LL scheduling)
+        if(config["slots"] > maxFreeSlots):
+            maxFreeSlotsMachine["port"] = config["port"]
+            maxFreeSlotsMachine["numFreeSlots"] = config["slots"]
+            maxFreeSlots = config["slots"]
+        
 
 
     print("\n\n----------REQUESTS BEGIN------------\n")
