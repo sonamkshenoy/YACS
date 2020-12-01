@@ -18,13 +18,13 @@ Worker configs:
 """
 
 # Worker variables
-totalNumSlots = 0
-freeSlotsNum = totalNumSlots
+# totalNumSlots = 0
+# freeSlotsNum = totalNumSlots
 
 
 # THREAD 1: LISTENS TO TASKS TO EXECUTE (ACTS AS CLIENT)
 
-def listenToTasks(lock):
+def listenToTasks():
 
     global freeSlotsNum
 
@@ -49,13 +49,13 @@ def listenToTasks(lock):
             # Return "Slots not available" if no free slots, so that master can re-allot task
             # print(freeSlotsNum)
 
-            if(freeSlotsNum <= 0):
-                mastersocket.send(SLOTS_NOT_AVAILABLE.encode())
-                mastersocket.close()
-                break
+            # if(freeSlotsNum <= 0):
+            #     mastersocket.send(SLOTS_NOT_AVAILABLE.encode())
+            #     mastersocket.close()
+            #     break
 
-            else:
-                mastersocket.send(SLOTS_AVAILABLE.encode())
+            # else:
+            #     mastersocket.send(SLOTS_AVAILABLE.encode())
 
 
             task = json.loads(data)
@@ -70,25 +70,25 @@ def listenToTasks(lock):
             duration = task["duration"]
             # }
 
-            t = threading.Thread(target = executeTaskAndUpdateMaster, args=(lock, taskid, duration))
+            t = threading.Thread(target = executeTaskAndUpdateMaster, args=(taskid, duration))
             t.start()
 
             # Number of available slots decreases by one
-            with lock:
-                freeSlotsNum -= 1
+            # with lock:
+            #     freeSlotsNum -= 1
 
             # Once duration of task done, update master
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            # with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
-                s.connect((MASTER_IP, MASTER_UPDATE_PORT))
-                message = json.dumps({NUMFREESLOTS: (WORKER_PORT, freeSlotsNum), TYPETASK: FREESLOTUPDATE})
-                s.send(message.encode())
+            #     s.connect((MASTER_IP, MASTER_UPDATE_PORT))
+            #     message = json.dumps({NUMFREESLOTS: (WORKER_PORT, freeSlotsNum), TYPETASK: FREESLOTUPDATE})
+            #     s.send(message.encode())
 
 
 
 # THREAD 2: EXECUTES TASKS AND UPDATES MASTER ABOUT THIS
 
-def executeTaskAndUpdateMaster(lock, task_id, durationOfTask):
+def executeTaskAndUpdateMaster(task_id, durationOfTask):
     global freeSlotsNum
 
     logging.info("[START] Task-{0} Started Execution".format(task_id))
@@ -105,15 +105,15 @@ def executeTaskAndUpdateMaster(lock, task_id, durationOfTask):
         durationOfTask -= 1
 
     # Current slot now becomes free
-    with lock:
-        freeSlotsNum += 1
+    # with lock:
+    #     freeSlotsNum += 1
 
     # Once duration of task done, update master
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
         s.connect((MASTER_IP, MASTER_UPDATE_PORT))
         duration = datetime.datetime.now() - starttime
-        message = json.dumps({NUMFREESLOTS: (WORKER_PORT, freeSlotsNum), "taskid": task_id, TYPETASK: TASKEXEC_AND_FREESLOTUPDATE})
+        message = json.dumps({PORTNUMBER: WORKER_PORT, "taskid": task_id})
         logging.info("[FINISH] TASK {0} Finished execution. Total duration - {1:.3f}".format(task_id, duration.total_seconds()*1000))
         s.send(message.encode())
 
@@ -189,10 +189,10 @@ if __name__ == "__main__":
 	# Once details fetched, set up socket for listening to tasks and thread for executing them
 
 	# Set up locks to prevent multiple threads from modifying "freeSlotsNum" at the same time
-	lock = threading.Lock()
+	# lock = threading.Lock()
 
 	try:
-		t1 = threading.Thread(target = listenToTasks, args=(lock,))
+		t1 = threading.Thread(target = listenToTasks)
 		# t2 = threading.Thread(target = sendHeartbeats)
 
 		t1.start()

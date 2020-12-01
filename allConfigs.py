@@ -10,10 +10,11 @@ WORKER_IP = "localhost"
 
 
 # Variables
-SLOTS_AVAILABLE = "Available"
-SLOTS_NOT_AVAILABLE = "Not Available"
-NUMFREESLOTS = "numFreeSlots"
-TYPETASK = "typeTask"
-FREESLOTUPDATE = "UpdateFreeSlots"
-TASKEXEC_AND_FREESLOTUPDATE = "MapTaskOverAndUpdateFreeSlots"
+# SLOTS_AVAILABLE = "Available"
+# SLOTS_NOT_AVAILABLE = "Not Available"
+# NUMFREESLOTS = "numFreeSlots"
+# TYPETASK = "typeTask"
+PORTNUMBER = "portNumber"
+# FREESLOTUPDATE = "UpdateFreeSlots"
+# TASKEXEC_AND_FREESLOTUPDATE = "MapTaskOverAndUpdateFreeSlots"
 # HEARTBEAT = "Heartbeat"

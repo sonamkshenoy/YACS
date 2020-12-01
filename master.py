@@ -13,8 +13,8 @@ from allConfigs import *
 import logging
 logging.basicConfig(
     level=logging.INFO,
-    format="(%(asctime)s) %(message)s",
-    handlers=[
+    format="(%(asctime)s) %(message)s",  
+    handlers=[  
         logging.FileHandler("logs/master.log"),
     ]
 )
@@ -59,20 +59,14 @@ def listenRequest():
         while True:
 
             # address has (host ip, port) of client (requests.py)
-            # print(clientsocket, "\n", address)
             data = reqGeneratorSocket.recv(4096).decode()
-            # print(data)
 
             if len(data) == 0: # the client does not send anything but just closes its side
                 # Close the connection with the client but keep socket open for new connections
                 reqGeneratorSocket.close()
-                # print('Request Generator disconnected')
                 break
 
             queueOfRequests.put(data)
-
-            # print("Received", data)
-            # reqGeneratorSocket.send(b"Received request successfully")
 
 
 
@@ -96,14 +90,13 @@ def getWorkerId():
         # If max free slots is 0, sleep for 1 second till it finds one
         while(maxFreeSlots <= 0):
             time.sleep(1)
-        # print(numFreeSlotsInAllMachines)
         return maxFreeSlotsMachine["port"]
 
     
 # THREAD 2 : SCHEDULES TASKS - both map and reduce (ACTS AS SERVER)
 # New thread since we don't want scheduling to block listening to events
 
-def scheduleRequest():
+def scheduleRequest(lock):
 
     global tasksInProcess
     global queueOfReduceRequests
@@ -148,29 +141,29 @@ def scheduleRequest():
                 # Now allot the map task to a worker machine
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
-                    machine_not_available = True
 
-                    while(machine_not_available):
+                    while(True):
                         # Get machine to execute according to chosen scheduling algorithm
                         selectedWorker = getWorkerId()
-                        s.connect((WORKER_IP, selectedWorker))
 
+                        # If no free slots, search for a machine with free slot
+                        if(numFreeSlotsInAllMachines[selectedWorker] <= 0):
+                            continue
                         
-                        # Send task
+                        # If free slots, connect and send task
+
+                        s.connect((WORKER_IP, selectedWorker))
+                        
                         message= json.dumps(task)
                         s.send(message.encode())
 
+                        logging.info("[INFO] Allotting task-{0} to {1} [SUCCESS]".format(task, selectedWorker))
 
-                        # If worker returned "Available" i.e. slots available, then go to schedule next task, else try another machine for same task
-                        if(s.recv(4096).decode()==SLOTS_NOT_AVAILABLE):
-                            s.close()
-                            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                            logging.info("[INFO] Allotting task-{0} to {1} [FAILED]".format(task, selectedWorker))
-                            continue
+                        # Number of available slots decreases by one since allotment successful
+                        with lock:
+                            numFreeSlotsInAllMachines[selectedWorker] -= 1
 
-                        else:
-                            machine_not_available = False
-                            logging.info("[INFO] Allotting task-{0} to {1} [SUCCESS]".format(task, selectedWorker))
+                        break
 
 
 
@@ -187,11 +180,13 @@ def scheduleRequest():
                 # Now allot the task to a worker machine
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
-                    machine_not_available = True
 
-                    while(machine_not_available):
+                    while(True):
                         # Get machine to execute according to chosen scheduling algorithm
                         selectedWorker = getWorkerId()
+
+                        if(numFreeSlotsInAllMachines[selectedWorker] <= 0):
+                            continue
 
                         s.connect((WORKER_IP, selectedWorker))
 
@@ -199,22 +194,19 @@ def scheduleRequest():
                         message= json.dumps(task)
                         s.send(message.encode())
 
-                        if(s.recv(4096).decode()==SLOTS_NOT_AVAILABLE):
-                            s.close()
-                            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                            logging.info("[INFO] Allotting task-{0} to {1} [FAILED]".format(task, selectedWorker))
-                            continue
+                        logging.info("[INFO] Allotting task-{0} to {1} [SUCCESS]".format(task, selectedWorker))
 
-                        else:
-                            machine_not_available = False
-                            logging.info("[INFO] Allotting task-{0} to {1} [SUCCESS]".format(task, selectedWorker))
+                        with lock:
+                            numFreeSlotsInAllMachines[selectedWorker] -= 1
+
+                        break
 
 
 
 
 # THREAD 3 : LISTENS TO UPDATES AND HEARTBEATS FROM WORKERS
 
-def listenToUpdatesFromWorker():
+def listenToUpdatesFromWorker(lock):
 
     global tasksInProcess
     global queueOfReduceRequests
@@ -227,7 +219,7 @@ def listenToUpdatesFromWorker():
     mastersocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     mastersocket.bind((MASTER_IP, MASTER_UPDATE_PORT))
     mastersocket.listen()
-    
+
     while True:
         (workersocket, address) = mastersocket.accept()
 
@@ -238,17 +230,15 @@ def listenToUpdatesFromWorker():
             if(len(data) == 0):
 
                 workersocket.close()
-                # print('Worker disconnected')
                 break
 
             # Get the update from worker (and hence the task id of the map task that finished executing)
             update = json.loads(data)
 
-            # Extract if task is to listen for heartbeat only or that plus "map task execution done" update
-            typeOfTask = update[TYPETASK]
 
             # Update number of free slots on that machine
-            numFreeSlotsInAllMachines[update[NUMFREESLOTS][0]] = update[NUMFREESLOTS][1]
+            with lock:
+                numFreeSlotsInAllMachines[update[PORTNUMBER]] += 1 
 
 
             maxFreeSlots = 0
@@ -259,114 +249,115 @@ def listenToUpdatesFromWorker():
                     maxFreeSlotsMachine["numFreeSlots"] = numFreeSlotsInAllMachines[machine]
                     maxFreeSlots = numFreeSlotsInAllMachines[machine]
 
-            # print("max free slots in", maxFreeSlotsMachine, "with", maxFreeSlots)
-
 
             # Execution update
-            if(typeOfTask == TASKEXEC_AND_FREESLOTUPDATE):
+            task_id = update["taskid"]
 
-                task_id = update["taskid"]
-
-                job_id = None
+            job_id = None
 
 
-                # Search the job the task belongs to and mark it as "no more executing" (by deleting its entry)
-                for executingJob in tasksInProcess:
-                    if(task_id in tasksInProcess[executingJob]["mapTasks"]):
-                        job_id = executingJob
-                        tasksInProcess[executingJob]["mapTasks"].remove(task_id)
-                        taskType = "mapTask"
-                        break
-
-                for executingJob in tasksInProcess:
-                    if(task_id in tasksInProcess[executingJob]["reduceTasks"]):
-                        job_id = executingJob
-                        tasksInProcess[executingJob]["reduceTasks"].remove(task_id)
-                        taskType = "reduceTask"
-                        break
-
-                # If job_id is not initialised (Should ideally never come to this condition, yet handle)
-                if not job_id:           
+            # Search the job the task belongs to and mark it as "no more executing" (by deleting its entry)
+            for executingJob in tasksInProcess:
+                if(task_id in tasksInProcess[executingJob]["mapTasks"]):
+                    job_id = executingJob
+                    tasksInProcess[executingJob]["mapTasks"].remove(task_id)
+                    taskType = "mapTask"
                     break
 
-                # If all reduce tasks of this job id have finished executing, remove this record (job) from "executing" list
-                if(taskType == "reduceTask" and len(tasksInProcess[job_id]["reduceTasks"]) <= 0):
-                    tasksInProcess.pop(job_id)
+            for executingJob in tasksInProcess:
+                if(task_id in tasksInProcess[executingJob]["reduceTasks"]):
+                    job_id = executingJob
+                    tasksInProcess[executingJob]["reduceTasks"].remove(task_id)
+                    taskType = "reduceTask"
+                    break
 
-                    # Calculate time taken to complete job
-                    starttime = jobTotalTime.pop(job_id)
-                    duration = datetime.datetime.now() - starttime
-                    
-                    logging.info("[FINISH] JOB {0} Finished execution. Total duration - {1:.3f}".format(job_id, duration.total_seconds()*1000))
+            # If job_id is not initialised (Should ideally never come to this condition, yet handle)
+            if not job_id:           
+                break
 
-                # If all map tasks of this job id have finished executing, add to the reduce task queue
-                if(taskType == "mapTask" and len(tasksInProcess[job_id]["mapTasks"]) <= 0):
-                    # print("All map tasks of jobs", job_id, "done")
-                    currentJob = tasksInProcess[job_id]
+            # If all reduce tasks of this job id have finished executing, remove this record (job) from "executing" list
+            if(taskType == "reduceTask" and len(tasksInProcess[job_id]["reduceTasks"]) <= 0):
+                tasksInProcess.pop(job_id)
 
-                    # Push all reduce tasks belonging to that job in queue to be executed (reduce tasks can be executed parallelly)                     
-                    queueOfReduceRequests.put(currentJob["reduceTasksInfo"])
+                # Calculate time taken to complete job
+                starttime = jobTotalTime.pop(job_id)
+                duration = datetime.datetime.now() - starttime
+
+                logging.info("[FINISH] JOB {0} Finished execution. Total duration - {1:.3f}".format(job_id, duration.total_seconds()*1000))
+
+            # If all map tasks of this job id have finished executing, add to the reduce task queue
+            if(taskType == "mapTask" and len(tasksInProcess[job_id]["mapTasks"]) <= 0):
+                currentJob = tasksInProcess[job_id]
+
+                # Push all reduce tasks belonging to that job in queue to be executed (reduce tasks can be executed parallelly)                     
+                queueOfReduceRequests.put(currentJob["reduceTasksInfo"])
 
 
 
 
 if __name__ == "__main__":
         
-	if len(sys.argv) < 3:
-		print("Usage: python master.py <path to config file> <scheduling algorithm>", file=sys.stderr)
-		sys.exit(-1)
+    if len(sys.argv) < 3:
+        print("Usage: python master.py <path to config file> <scheduling algorithm>", file=sys.stderr)
+        sys.exit(-1)
 
-	PATH_TO_CONFIG = sys.argv[1]
-	SCHEDULING_ALGO = sys.argv[2]
+    PATH_TO_CONFIG = sys.argv[1]
+    SCHEDULING_ALGO = sys.argv[2]
 
-	if(SCHEDULING_ALGO not in ["R", "RR", "LL"]):
-		print("Please enter R, RR or LL only.\nR for Random\nRR for Round Robin\nLL for Least Loaded\n")
-		sys.exit(-1)
+    if(SCHEDULING_ALGO not in ["R", "RR", "LL"]):
+        print("Please enter R, RR or LL only.\nR for Random\nRR for Round Robin\nLL for Least Loaded\n")
+        sys.exit(-1)
 
-	# debug -> if logs should be print to the terminal
-	debug = True
-	if(len(sys.argv) == 4):
-		debug = sys.argv[3]
-		if(debug == 'False'): debug = False
-		
-	if(debug): logging.getLogger().addHandler(logging.StreamHandler())
-
-	# Get all workers and their port numbers from the config file
-	with open(PATH_TO_CONFIG, "r") as f:
-		configs = f.read()
-
-	configs = json.loads(configs)
-	configs = configs[MAINKEYINCONFIG]
+    # debug -> if logs should be print to the terminal
+    debug = True
+    if(len(sys.argv) == 4):
+        debug = sys.argv[3]
+        if(debug == 'False'): debug = False
 
 
-	maxFreeSlots = 0
+    if(debug): 
+        logging.getLogger().addHandler(logging.StreamHandler())
 
-	for config in configs:
-		allPorts.append(config["port"])
-		numFreeSlotsInAllMachines[config["port"]] = config["slots"]
+    # Get all workers and their port numbers from the config file
+    with open(PATH_TO_CONFIG, "r") as f:
+        configs = f.read()
 
-		# Update if this machine has the maximum number of slots (used for LL scheduling)
-		if(config["slots"] > maxFreeSlots):
-			maxFreeSlotsMachine["port"] = config["port"]
-			maxFreeSlotsMachine["numFreeSlots"] = config["slots"]
-			maxFreeSlots = config["slots"]
-		
+    configs = json.loads(configs)
+    configs = configs[MAINKEYINCONFIG]
 
 
-	if(debug): print("\n----------REQUESTS BEGIN------------\n")
+    maxFreeSlots = 0
+
+    for config in configs:
+        allPorts.append(config["port"])
+        numFreeSlotsInAllMachines[config["port"]] = config["slots"]
+
+        # Update if this machine has the maximum number of slots (used for LL scheduling)
+        if(config["slots"] > maxFreeSlots):
+            maxFreeSlotsMachine["port"] = config["port"]
+            maxFreeSlotsMachine["numFreeSlots"] = config["slots"]
+            maxFreeSlots = config["slots"]
 
 
-	try:
-		t1 = threading.Thread(target = listenRequest)
-		t2 = threading.Thread(target = scheduleRequest)
-		t3 = threading.Thread(target = listenToUpdatesFromWorker)
+    if(debug):
+        print("\n----------REQUESTS BEGIN------------\n")
 
-		t1.start()
-		t2.start()
-		t3.start()
+    # Set up locks to prevent multiple threads from modifying "freeSlotsNum" at the same time
+    
+    lock = threading.Lock()
 
-		# We don't want to join (stop master till threads finish executing, they don't stop executing)
+    try:
+        t1 = threading.Thread(target = listenRequest)
+        t2 = threading.Thread(target = scheduleRequest, args=(lock,))
+        t3 = threading.Thread(target = listenToUpdatesFromWorker, args=(lock,))
 
-	except Exception as e:
-		if(debug): print("Error in starting thread: ", e)
+        t1.start()
+        t2.start()
+        t3.start()
+        
+        # We don't want to join (stop master till threads finish executing, they don't stop executing)
+
+    except Exception as e:
+        if(debug): 
+            print("Error in starting thread: ", e)
 
