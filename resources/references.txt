@@ -4,6 +4,4 @@
 4. Locks: https://www.bogotobogo.com/python/Multithread/python_multithreading_Using_Locks_with_statement_Context_Manager.php
 
 # TODO
-1. Add semaphores for global variables shared between threads
-2. Check if slots available before sending task
-3. 3 types of scheduling algos
+1. Update logging of master
