@@ -3,7 +3,7 @@ Big Data Scheduler YACS - "Yet Another Centralized Scheduler"
 
 
 
-# Folder Structure  
+## Folder Structure  
 
 * config.json : Contains the info about worker (worker id, port worker is running on, number of slots in the worker)   
 * allconfigs.py : Common variable names that are used in almost all files   
@@ -17,7 +17,7 @@ Big Data Scheduler YACS - "Yet Another Centralized Scheduler"
 
 ---
 
-# Terminologies   
+## Terminologies   
 * Master: The main node that schedules the tasks of the jobs amongst the workers depending on the scheduling algorithm and availability of free slots in the worker   
 * Job: A job is made up of tasks. Tasks can be either map or reduce tasks   
 * Task: A map or reduce task   
@@ -26,14 +26,14 @@ Big Data Scheduler YACS - "Yet Another Centralized Scheduler"
 
 ---
 
-# Scheduling Algorithms  
+## Scheduling Algorithms  
 1. Random  
 2. Round-Robin (A slight modification has been made here. Instead of starting search from the first worker id everytime, it starts search in round-robin fashion from the last allocated node.)  
 3. Least Loaded
 
 ----
 
-# Working   
+## Working   
 The worker has 2 threads - one that listens to requests from the master and another that simulates a slot for execution and updating the master.  
 The master has 2 threads too - one hat listens to requests from the request generator and another that listens to updates from the workers.   
 Since we are just simulating the working of a scheduler, the number of slots in a worker has been fixed in the `config.json` file instead of checking the resources in the machine. The execution of the task has been simulated as well by decreasing the remaining duration of the task every second. As soon as the task finishes executing, the master (scheduler) is updated.  
@@ -60,7 +60,7 @@ Since we are just simulating the working of a scheduler, the number of slots in 
 
 ----
 
-# Steps to run
+## Steps to execute  
 1. Run master  
 
 Scheduling algorithm can take these values:.  

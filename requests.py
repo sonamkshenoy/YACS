@@ -23,6 +23,7 @@ def send_request(job_request):
 		s.connect((MASTER_IP, MASTER_SCHEDULING_PORT))
 		message=json.dumps(job_request)
 		#send task
+		# print(message)
 		s.send(message.encode())
 
 

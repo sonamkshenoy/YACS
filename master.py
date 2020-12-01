@@ -29,8 +29,6 @@ allPorts = []
 tasksInProcess = {} # Keeps record of jobs whose map or reduce tasks are still running
 lastUsedWorkerPortIndex = 0 # Used only for Round Robin Scheduling
 numFreeSlotsInAllMachines = {}
-maxFreeSlotsMachine = {} # Used only for Least Loaded Machine
-maxFreeSlots = 0
 jobTotalTime = {}
 
 # THREAD 1: LISTENS TO REQUESTS (ACTS AS CLIENT)
@@ -88,9 +86,20 @@ def getWorkerId():
     # Least Loaded selection
     else:
         # If max free slots is 0, sleep for 1 second till it finds one
-        while(maxFreeSlots <= 0):
+        maxFreeSlots = 0
+        maxFreeSlotsMachine = list(numFreeSlotsInAllMachines.keys())[0]
+
+        while(True):
+            for machine in numFreeSlotsInAllMachines:
+                if(numFreeSlotsInAllMachines[machine] > maxFreeSlots):
+                    maxFreeSlots = numFreeSlotsInAllMachines[machine]
+                    maxFreeSlotsMachine = machine
+
+            if(maxFreeSlots > 0):
+                break
             time.sleep(1)
-        return maxFreeSlotsMachine["port"]
+
+        return maxFreeSlotsMachine
 
     
 # THREAD 2 : SCHEDULES TASKS - both map and reduce (ACTS AS SERVER)
@@ -143,6 +152,7 @@ def scheduleRequest(lock):
 
 
                     while(True):
+                        print(numFreeSlotsInAllMachines)
                         # Get machine to execute according to chosen scheduling algorithm
                         selectedWorker = getWorkerId()
 
@@ -182,6 +192,7 @@ def scheduleRequest(lock):
 
 
                     while(True):
+                        print(numFreeSlotsInAllMachines)
                         # Get machine to execute according to chosen scheduling algorithm
                         selectedWorker = getWorkerId()
 
@@ -211,8 +222,6 @@ def listenToUpdatesFromWorker(lock):
     global tasksInProcess
     global queueOfReduceRequests
     global numFreeSlotsInAllMachines
-    global maxFreeSlotsMachine
-    global maxFreeSlots
 
 
     # Set up socket
@@ -239,16 +248,6 @@ def listenToUpdatesFromWorker(lock):
             # Update number of free slots on that machine
             with lock:
                 numFreeSlotsInAllMachines[update[PORTNUMBER]] += 1 
-
-
-            maxFreeSlots = 0
-
-            for machine in numFreeSlotsInAllMachines:
-                if(numFreeSlotsInAllMachines[machine] > maxFreeSlots):
-                    maxFreeSlotsMachine["port"] = machine
-                    maxFreeSlotsMachine["numFreeSlots"] = numFreeSlotsInAllMachines[machine]
-                    maxFreeSlots = numFreeSlotsInAllMachines[machine]
-
 
             # Execution update
             task_id = update["taskid"]
@@ -292,6 +291,8 @@ def listenToUpdatesFromWorker(lock):
                 # Push all reduce tasks belonging to that job in queue to be executed (reduce tasks can be executed parallelly)                     
                 queueOfReduceRequests.put(currentJob["reduceTasksInfo"])
 
+            print(numFreeSlotsInAllMachines)
+
 
 
 
@@ -326,18 +327,10 @@ if __name__ == "__main__":
     configs = configs[MAINKEYINCONFIG]
 
 
-    maxFreeSlots = 0
 
     for config in configs:
         allPorts.append(config["port"])
         numFreeSlotsInAllMachines[config["port"]] = config["slots"]
-
-        # Update if this machine has the maximum number of slots (used for LL scheduling)
-        if(config["slots"] > maxFreeSlots):
-            maxFreeSlotsMachine["port"] = config["port"]
-            maxFreeSlotsMachine["numFreeSlots"] = config["slots"]
-            maxFreeSlots = config["slots"]
-
 
     if(debug):
         print("\n----------REQUESTS BEGIN------------\n")
