@@ -7,6 +7,8 @@ import datetime
 
 from allConfigs import *
 
+import logging
+
 """
 Worker configs:
     1. WORKER_PORT
@@ -45,7 +47,7 @@ def listenToTasks(lock):
                 break
 
             # Return "Slots not available" if no free slots, so that master can re-allot task
-            print(freeSlotsNum)
+            # print(freeSlotsNum)
 
             if(freeSlotsNum <= 0):
                 mastersocket.send(SLOTS_NOT_AVAILABLE.encode())
@@ -89,7 +91,8 @@ def listenToTasks(lock):
 def executeTaskAndUpdateMaster(lock, task_id, durationOfTask):
     global freeSlotsNum
 
-    print("Started execution of", task_id, "with duration", durationOfTask)
+    logging.info("[START] Task-{0} Started Execution".format(task_id))
+    starttime = datetime.datetime.now()
 
     # Execute task of x duration
     while(durationOfTask):
@@ -101,8 +104,6 @@ def executeTaskAndUpdateMaster(lock, task_id, durationOfTask):
         time.sleep(1) 
         durationOfTask -= 1
 
-    print("Finished execution of", task_id)
-
     # Current slot now becomes free
     with lock:
         freeSlotsNum += 1
@@ -111,7 +112,9 @@ def executeTaskAndUpdateMaster(lock, task_id, durationOfTask):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
         s.connect((MASTER_IP, MASTER_UPDATE_PORT))
+        duration = datetime.datetime.now() - starttime
         message = json.dumps({NUMFREESLOTS: (WORKER_PORT, freeSlotsNum), "taskid": task_id, TYPETASK: TASKEXEC_AND_FREESLOTUPDATE})
+        logging.info("[FINISH] TASK {0} Finished execution. Total duration - {1:.3f}".format(task_id, duration.total_seconds()*1000))
         s.send(message.encode())
 
 
@@ -136,55 +139,62 @@ def sendHeartbeats():
 # MAIN FUNCTION   
 if __name__ == "__main__":
 
+	# First get worker details
+	# Make sure user passes port number for worker
+	if len(sys.argv) < 3:
+		print("Usage: python worker.py <port no.> <worker_id>", file=sys.stderr)
+		sys.exit(-1)
 
-    # First get worker details
+	WORKER_PORT = int(sys.argv[1])
+	WORKER_ID = int(sys.argv[2])
 
-    # Make sure user passes port number for worker
-    if len(sys.argv) < 3:
-        print("Usage: python worker.py <port no.> <worker_id>", file=sys.stderr)
-        sys.exit(-1)
+	logging.basicConfig(
+		level=logging.INFO,
+		format="(%(asctime)s) %(message)s",
+		handlers=[
+			logging.FileHandler("logs/worker_{0}.log".format(WORKER_ID)),
+			logging.StreamHandler()
+		]
+	)
 
-    WORKER_PORT = int(sys.argv[1])
-    WORKER_ID = int(sys.argv[2])
+	with open(CONFIGFILE, "r") as f:
+		configs = f.read()
 
-    with open(CONFIGFILE, "r") as f:
-        configs = f.read()
+	configs = json.loads(configs)
+	configs = configs[MAINKEYINCONFIG]
 
-    configs = json.loads(configs)
-    configs = configs[MAINKEYINCONFIG]
-
-    for config in configs:
-        if config["port"] == WORKER_PORT and config["worker_id"] == WORKER_ID:
-            print(config)
-            WORKER_CONFIG = config
-
-    
-    # Scanned entire config file, port number not present
-    if(not WORKER_CONFIG):
-        print("Configurations for entered port number is not present in the config file")
-        sys.exit(0)
-
-    # WORKER_ID = WORKER_CONFIG["worker_id"]
-    totalNumSlots = WORKER_CONFIG["slots"]
-    freeSlotsNum = totalNumSlots
+	for config in configs:
+		if config["port"] == WORKER_PORT and config["worker_id"] == WORKER_ID:
+		    print(config)
+		    WORKER_CONFIG = config
 
 
-    # Once details fetched, set up socket for listening to tasks and thread for executing them
+	# Scanned entire config file, port number not present
+	if(not WORKER_CONFIG):
+		print("Configurations for entered port number is not present in the config file")
+		sys.exit(0)
 
-    # Set up locks to prevent multiple threads from modifying "freeSlotsNum" at the same time
-    lock = threading.Lock()
+	# WORKER_ID = WORKER_CONFIG["worker_id"]
+	totalNumSlots = WORKER_CONFIG["slots"]
+	freeSlotsNum = totalNumSlots
 
-    try:
-        t1 = threading.Thread(target = listenToTasks, args=(lock,))
-        # t2 = threading.Thread(target = sendHeartbeats)
 
-        t1.start()
-        # t2.start()
+	# Once details fetched, set up socket for listening to tasks and thread for executing them
 
-        # We don't want to join (stop master till threads finish executing, they don't stop executing)
+	# Set up locks to prevent multiple threads from modifying "freeSlotsNum" at the same time
+	lock = threading.Lock()
 
-    except Exception as e:
-        print("Error in starting thread: ", e)
+	try:
+		t1 = threading.Thread(target = listenToTasks, args=(lock,))
+		# t2 = threading.Thread(target = sendHeartbeats)
+
+		t1.start()
+		# t2.start()
+
+		# We don't want to join (stop master till threads finish executing, they don't stop executing)
+
+	except Exception as e:
+		print("Error in starting thread: ", e)
 
 
 
