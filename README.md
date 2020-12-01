@@ -23,8 +23,8 @@ python3 worker.py <worker port number> <worker if>
 
 Example:
 python3 worker.py 4000 1
-python3 worker.py 4000 2
-python3 worker.py 4000 3
+python3 worker.py 4001 2
+python3 worker.py 4002 3
 ```
 
 3.
