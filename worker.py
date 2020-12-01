@@ -153,9 +153,16 @@ if __name__ == "__main__":
 		format="(%(asctime)s) %(message)s",
 		handlers=[
 			logging.FileHandler("logs/worker_{0}.log".format(WORKER_ID)),
-			logging.StreamHandler()
 		]
 	)
+	
+	# debug -> if logs should be print to the terminal
+	debug = True
+	if(len(sys.argv) == 4):
+		debug = sys.argv[3]
+		if(debug == 'False'): debug = False
+		
+	if(debug): logging.getLogger().addHandler(logging.StreamHandler())
 
 	with open(CONFIGFILE, "r") as f:
 		configs = f.read()
@@ -165,13 +172,13 @@ if __name__ == "__main__":
 
 	for config in configs:
 		if config["port"] == WORKER_PORT and config["worker_id"] == WORKER_ID:
-		    print(config)
+		    if(debug): print(config)
 		    WORKER_CONFIG = config
 
 
 	# Scanned entire config file, port number not present
 	if(not WORKER_CONFIG):
-		print("Configurations for entered port number is not present in the config file")
+		if(debug): print("Configurations for entered port number is not present in the config file")
 		sys.exit(0)
 
 	# WORKER_ID = WORKER_CONFIG["worker_id"]

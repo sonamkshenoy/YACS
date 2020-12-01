@@ -16,7 +16,6 @@ logging.basicConfig(
     format="(%(asctime)s) %(message)s",
     handlers=[
         logging.FileHandler("logs/master.log"),
-        logging.StreamHandler()
     ]
 )
 
@@ -312,7 +311,7 @@ def listenToUpdatesFromWorker():
 
 
 if __name__ == "__main__":
-
+        
 	if len(sys.argv) < 3:
 		print("Usage: python master.py <path to config file> <scheduling algorithm>", file=sys.stderr)
 		sys.exit(-1)
@@ -324,8 +323,15 @@ if __name__ == "__main__":
 		print("Please enter R, RR or LL only.\nR for Random\nRR for Round Robin\nLL for Least Loaded\n")
 		sys.exit(-1)
 
-	# Get all workers and their port numbers from the config file
+	# debug -> if logs should be print to the terminal
+	debug = True
+	if(len(sys.argv) == 4):
+		debug = sys.argv[3]
+		if(debug == 'False'): debug = False
+		
+	if(debug): logging.getLogger().addHandler(logging.StreamHandler())
 
+	# Get all workers and their port numbers from the config file
 	with open(PATH_TO_CONFIG, "r") as f:
 		configs = f.read()
 
@@ -341,13 +347,13 @@ if __name__ == "__main__":
 
 		# Update if this machine has the maximum number of slots (used for LL scheduling)
 		if(config["slots"] > maxFreeSlots):
-		    maxFreeSlotsMachine["port"] = config["port"]
-		    maxFreeSlotsMachine["numFreeSlots"] = config["slots"]
-		    maxFreeSlots = config["slots"]
+			maxFreeSlotsMachine["port"] = config["port"]
+			maxFreeSlotsMachine["numFreeSlots"] = config["slots"]
+			maxFreeSlots = config["slots"]
 		
 
 
-	print("\n----------REQUESTS BEGIN------------\n")
+	if(debug): print("\n----------REQUESTS BEGIN------------\n")
 
 
 	try:
@@ -362,5 +368,5 @@ if __name__ == "__main__":
 		# We don't want to join (stop master till threads finish executing, they don't stop executing)
 
 	except Exception as e:
-		print("Error in starting thread: ", e)
-	
+		if(debug): print("Error in starting thread: ", e)
+
