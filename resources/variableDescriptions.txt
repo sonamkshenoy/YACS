@@ -33,7 +33,11 @@ tasksInProcess = {
             <maptaskid1>, 
             <maptaskid2>
         ],
-        'reduceTasks': [
+        "reduceTasks":[
+            <reducetaskid1>, 
+            <reducetaskid2>
+        ],
+        'reduceTasksInfo': [
             {
                 'task_id': <reducetaskid2>, 
                 'duration': <time>
