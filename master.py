@@ -4,6 +4,7 @@ import threading
 import json
 import random
 import time
+import datetime
 
 from queue import Queue
 
@@ -17,11 +18,12 @@ SCHEDULING_ALGO = "R"
 queueOfRequests = Queue()
 queueOfReduceRequests = Queue()
 allPorts = []
-tasksInProcess = {} # Keeps record of jobs whose map tasks are still running
+tasksInProcess = {} # Keeps record of jobs whose map or reduce tasks are still running
 lastUsedWorkerPortIndex = 0 # Used only for Round Robin Scheduling
 numFreeSlotsInAllMachines = {}
 maxFreeSlotsMachine = {} # Used only for Least Loaded Machine
 maxFreeSlots = 0
+jobTotalTime = {}
 
 # THREAD 1: LISTENS TO REQUESTS (ACTS AS CLIENT)
 
@@ -120,14 +122,18 @@ def scheduleRequest():
             job_id = newJobRequest["job_id"]
 
             # Create an entry for current job in "executing"
-            tasksInProcess[job_id] = {"mapTasks":[], "reduceTasks":[]}
+            tasksInProcess[job_id] = {"mapTasks":[], "reduceTasks":[], "reduceTasksInfo":[]}
 
             # Mark the sent map task of current job as "executing"
-            tasksInProcess[job_id]["mapTasks"] = [list(x.keys())[0] for x in mapTasks]
-            tasksInProcess[job_id]["reduceTasks"] = reduceTasks
-            print(tasksInProcess)
+            tasksInProcess[job_id]["mapTasks"] = [x[list(x.keys())[0]] for x in mapTasks]
+            tasksInProcess[job_id]["reduceTasks"] = [x[list(x.keys())[0]] for x in reduceTasks]
+            tasksInProcess[job_id]["reduceTasksInfo"] = reduceTasks
+            # print(tasksInProcess)
 
+            print("(", datetime.datetime.now(),") [START] JOB ", job_id, " STARTED EXECUTION", sep="")
 
+            # Keep log of time at which job began
+            jobTotalTime[job_id] = datetime.datetime.now()
 
 
             for task in mapTasks:
@@ -140,8 +146,6 @@ def scheduleRequest():
                     while(machine_not_available):
                         # Get machine to execute according to chosen scheduling algorithm
                         selectedWorker = getWorkerId()
-
-                        print("Try allotting task", task, "to", selectedWorker, "since" ,numFreeSlotsInAllMachines)
                         s.connect((WORKER_IP, selectedWorker))
 
                         
@@ -154,11 +158,12 @@ def scheduleRequest():
                         if(s.recv(4096).decode()==SLOTS_NOT_AVAILABLE):
                             s.close()
                             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                            print("(", datetime.datetime.now(),") \t\tAllotting task ", task, " to ", selectedWorker, " [Failed]", sep="")
                             continue
 
                         else:
                             machine_not_available = False
-                            print("Allotted task", task, "to", selectedWorker)
+                            print("(", datetime.datetime.now(),") \t\tAllotting task ", task, " to ", selectedWorker, " [Success]", sep="")
 
 
 
@@ -181,8 +186,6 @@ def scheduleRequest():
                         # Get machine to execute according to chosen scheduling algorithm
                         selectedWorker = getWorkerId()
 
-                        print("Try allotting task", task, "to", selectedWorker)
-
                         s.connect((WORKER_IP, selectedWorker))
 
                         # Send task
@@ -192,11 +195,12 @@ def scheduleRequest():
                         if(s.recv(4096).decode()==SLOTS_NOT_AVAILABLE):
                             s.close()
                             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                            print("(", datetime.datetime.now(),") \t\tAllotting task ", task, " to ", selectedWorker, " [Failed]", sep="")
                             continue
 
                         else:
                             machine_not_available = False
-                            print("Allotted task", task, "to", selectedWorker)
+                            print("(", datetime.datetime.now(),") \t\tAllotting task ", task, " to ", selectedWorker, " [Success]", sep="")
 
 
 
@@ -259,27 +263,43 @@ def listenToUpdatesFromWorker():
 
                 job_id = None
 
+
                 # Search the job the task belongs to and mark it as "no more executing" (by deleting its entry)
                 for executingJob in tasksInProcess:
                     if(task_id in tasksInProcess[executingJob]["mapTasks"]):
                         job_id = executingJob
                         tasksInProcess[executingJob]["mapTasks"].remove(task_id)
+                        taskType = "mapTask"
+                        break
+
+                for executingJob in tasksInProcess:
+                    if(task_id in tasksInProcess[executingJob]["reduceTasks"]):
+                        job_id = executingJob
+                        tasksInProcess[executingJob]["reduceTasks"].remove(task_id)
+                        taskType = "reduceTask"
                         break
 
                 # If job_id is not initialised (Should ideally never come to this condition, yet handle)
-                if not job_id:
+                if not job_id:           
                     break
 
-                # If all map tasks of this job id have finished executing, remove this record (job) from "executing" list and add to the reduce task queue
-                if(len(tasksInProcess[job_id]["mapTasks"]) <= 0):
+                # If all reduce tasks of this job id have finished executing, remove this record (job) from "executing" list
+                if(taskType == "reduceTask" and len(tasksInProcess[job_id]["reduceTasks"]) <= 0):
+                    tasksInProcess.pop(job_id)
+
+                    # Calculate time taken to complete job
+                    starttime = jobTotalTime.pop(job_id)
+                    duration = datetime.datetime.now() - starttime
+
+                    print("(", datetime.datetime.now(),") [FINISH] JOB ", job_id, " FINISHED EXECUTION. TOOK ", duration.seconds, " SECONDS TO EXECUTE ENTIRE JOB.", sep = "")
+
+                # If all map tasks of this job id have finished executing, add to the reduce task queue
+                if(taskType == "mapTask" and len(tasksInProcess[job_id]["mapTasks"]) <= 0):
                     # print("All map tasks of jobs", job_id, "done")
-                    poppedJob = tasksInProcess.pop(job_id)
+                    currentJob = tasksInProcess[job_id]
 
                     # Push all reduce tasks belonging to that job in queue to be executed (reduce tasks can be executed parallelly)                     
-                    queueOfReduceRequests.put(poppedJob["reduceTasks"])
-
-
-            print("Free Slots", numFreeSlotsInAllMachines)
+                    queueOfReduceRequests.put(currentJob["reduceTasksInfo"])
 
 
 
