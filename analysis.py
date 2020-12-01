@@ -70,6 +70,8 @@ if __name__ == "__main__":
 			# calculate total duration to determine the binning interval of graph
 			total_duration = (end_time - start_time).seconds + 1
 			keys = list(range(0, total_duration+1, bins))
+			keys.append(total_duration)
+			keys.sort()
 			tasks = {}
 			
 			# initialise all values of tasks to -1 
@@ -89,7 +91,7 @@ if __name__ == "__main__":
 				# if difference is more than the current bin, update 'tasks'
 				diff = (timestamp - start_time).total_seconds()
 				if(diff >= keys[ind]):
-					tasks[ind] = active
+					tasks[keys[ind]] = active
 					ind += 1
 				
 				# active tasks increments by one
