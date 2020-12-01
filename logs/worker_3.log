@@ -1,0 +1,24 @@
+(2020-12-01 20:40:48,758) [START] Task-3_M2 Started Execution
+(2020-12-01 20:40:51,069) [START] Task-6_M2 Started Execution
+(2020-12-01 20:40:51,069) [START] Task-6_M3 Started Execution
+(2020-12-01 20:40:52,767) [FINISH] TASK 3_M2 Finished execution. Total duration - 4009.101
+(2020-12-01 20:40:53,704) [START] Task-8_M1 Started Execution
+(2020-12-01 20:40:54,075) [FINISH] TASK 6_M3 Finished execution. Total duration - 3005.813
+(2020-12-01 20:40:55,076) [FINISH] TASK 6_M2 Finished execution. Total duration - 4007.570
+(2020-12-01 20:40:55,180) [START] Task-9_M0 Started Execution
+(2020-12-01 20:40:55,180) [START] Task-9_M1 Started Execution
+(2020-12-01 20:40:55,706) [FINISH] TASK 8_M1 Finished execution. Total duration - 2001.150
+(2020-12-01 20:40:56,106) [START] Task-10_M1 Started Execution
+(2020-12-01 20:40:59,199) [FINISH] TASK 9_M0 Finished execution. Total duration - 4019.192
+(2020-12-01 20:40:59,211) [FINISH] TASK 9_M1 Finished execution. Total duration - 4030.173
+(2020-12-01 20:40:59,527) [START] Task-12_M3 Started Execution
+(2020-12-01 20:40:59,528) [START] Task-9_R0 Started Execution
+(2020-12-01 20:41:00,113) [FINISH] TASK 10_M1 Finished execution. Total duration - 4006.766
+(2020-12-01 20:41:00,539) [START] Task-15_M0 Started Execution
+(2020-12-01 20:41:02,548) [FINISH] TASK 12_M3 Finished execution. Total duration - 3020.446
+(2020-12-01 20:41:02,549) [FINISH] TASK 9_R0 Finished execution. Total duration - 3020.511
+(2020-12-01 20:41:03,552) [START] Task-15_M2 Started Execution
+(2020-12-01 20:41:04,551) [FINISH] TASK 15_M0 Finished execution. Total duration - 4011.944
+(2020-12-01 20:41:04,554) [FINISH] TASK 15_M2 Finished execution. Total duration - 1001.474
+(2020-12-01 20:41:04,900) [START] Task-17_M2 Started Execution
+(2020-12-01 20:41:06,902) [FINISH] TASK 17_M2 Finished execution. Total duration - 2002.480

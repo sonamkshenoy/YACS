@@ -10,6 +10,14 @@ from queue import Queue
 
 from allConfigs import *
 
+import logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="(%(asctime)s) %(message)s",
+    handlers=[
+        logging.FileHandler("logs/master.log"),
+    ]
+)
 
 # Initialise scheduling algo to "random"
 SCHEDULING_ALGO = "R"
@@ -128,9 +136,8 @@ def scheduleRequest():
             tasksInProcess[job_id]["mapTasks"] = [x[list(x.keys())[0]] for x in mapTasks]
             tasksInProcess[job_id]["reduceTasks"] = [x[list(x.keys())[0]] for x in reduceTasks]
             tasksInProcess[job_id]["reduceTasksInfo"] = reduceTasks
-            # print(tasksInProcess)
 
-            print("(", datetime.datetime.now(),") [START] JOB ", job_id, " STARTED EXECUTION", sep="")
+            logging.info("[START] Job-{0} Started Execution".format(job_id))
 
             # Keep log of time at which job began
             jobTotalTime[job_id] = datetime.datetime.now()
@@ -158,12 +165,12 @@ def scheduleRequest():
                         if(s.recv(4096).decode()==SLOTS_NOT_AVAILABLE):
                             s.close()
                             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                            print("(", datetime.datetime.now(),") \t\tAllotting task ", task, " to ", selectedWorker, " [Failed]", sep="")
+                            logging.info("[INFO] Allotting task-{0} to {1} [FAILED]".format(task, selectedWorker))
                             continue
 
                         else:
                             machine_not_available = False
-                            print("(", datetime.datetime.now(),") \t\tAllotting task ", task, " to ", selectedWorker, " [Success]", sep="")
+                            logging.info("[INFO] Allotting task-{0} to {1} [SUCCESS]".format(task, selectedWorker))
 
 
 
@@ -195,18 +202,17 @@ def scheduleRequest():
                         if(s.recv(4096).decode()==SLOTS_NOT_AVAILABLE):
                             s.close()
                             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                            print("(", datetime.datetime.now(),") \t\tAllotting task ", task, " to ", selectedWorker, " [Failed]", sep="")
+                            logging.info("[INFO] Allotting task-{0} to {1} [FAILED]".format(task, selectedWorker))
                             continue
 
                         else:
                             machine_not_available = False
-                            print("(", datetime.datetime.now(),") \t\tAllotting task ", task, " to ", selectedWorker, " [Success]", sep="")
+                            logging.info("[INFO] Allotting task-{0} to {1} [SUCCESS]".format(task, selectedWorker))
 
 
 
 
 # THREAD 3 : LISTENS TO UPDATES AND HEARTBEATS FROM WORKERS
-
 
 def listenToUpdatesFromWorker():
 
@@ -290,8 +296,8 @@ def listenToUpdatesFromWorker():
                     # Calculate time taken to complete job
                     starttime = jobTotalTime.pop(job_id)
                     duration = datetime.datetime.now() - starttime
-
-                    print("(", datetime.datetime.now(),") [FINISH] JOB ", job_id, " FINISHED EXECUTION. TOOK ", duration.seconds, " SECONDS TO EXECUTE ENTIRE JOB.", sep = "")
+                    
+                    logging.info("[FINISH] JOB {0} Finished execution. Total duration - {1:.3f}".format(job_id, duration.total_seconds()*1000))
 
                 # If all map tasks of this job id have finished executing, add to the reduce task queue
                 if(taskType == "mapTask" and len(tasksInProcess[job_id]["mapTasks"]) <= 0):
@@ -305,74 +311,62 @@ def listenToUpdatesFromWorker():
 
 
 if __name__ == "__main__":
-
-    if len(sys.argv) < 3:
-        print("Usage: python master.py <path to config file> <scheduling algorithm>", file=sys.stderr)
-        sys.exit(-1)
-
-    PATH_TO_CONFIG = sys.argv[1]
-    SCHEDULING_ALGO = sys.argv[2]
-
-    if(SCHEDULING_ALGO not in ["R", "RR", "LL"]):
-        print("Please enter R, RR or LL only.\nR for Random\nRR for Round Robin\nLL for Least Loaded\n")
-        sys.exit(-1)
-
-    """
-    while(True):
-        algo = int(input("Select type of scheduling algorithm:\n1 for RANDOM\n2 for ROUND ROBIN\n3 for LEAST LOADED\n\n"))
-
-        if(algo == 1):
-            SCHEDULING_ALGO = 1
-            break
-        elif(algo == 2):
-            SCHEDULING_ALGO = 2
-            break
-        elif(algo == 3):
-            SCHEDULING_ALGO = 3
-            break
-        else:
-            print("Please enter 1, 2 or 3 only")
-    """
-
-    # Get all workers and their port numbers from the config file
-
-    with open(PATH_TO_CONFIG, "r") as f:
-        configs = f.read()
-
-    configs = json.loads(configs)
-    configs = configs[MAINKEYINCONFIG]
-
-
-    maxFreeSlots = 0
-
-    for config in configs:
-        allPorts.append(config["port"])
-        numFreeSlotsInAllMachines[config["port"]] = config["slots"]
-
-        # Update if this machine has the maximum number of slots (used for LL scheduling)
-        if(config["slots"] > maxFreeSlots):
-            maxFreeSlotsMachine["port"] = config["port"]
-            maxFreeSlotsMachine["numFreeSlots"] = config["slots"]
-            maxFreeSlots = config["slots"]
         
+	if len(sys.argv) < 3:
+		print("Usage: python master.py <path to config file> <scheduling algorithm>", file=sys.stderr)
+		sys.exit(-1)
+
+	PATH_TO_CONFIG = sys.argv[1]
+	SCHEDULING_ALGO = sys.argv[2]
+
+	if(SCHEDULING_ALGO not in ["R", "RR", "LL"]):
+		print("Please enter R, RR or LL only.\nR for Random\nRR for Round Robin\nLL for Least Loaded\n")
+		sys.exit(-1)
+
+	# debug -> if logs should be print to the terminal
+	debug = True
+	if(len(sys.argv) == 4):
+		debug = sys.argv[3]
+		if(debug == 'False'): debug = False
+		
+	if(debug): logging.getLogger().addHandler(logging.StreamHandler())
+
+	# Get all workers and their port numbers from the config file
+	with open(PATH_TO_CONFIG, "r") as f:
+		configs = f.read()
+
+	configs = json.loads(configs)
+	configs = configs[MAINKEYINCONFIG]
 
 
-    print("\n\n----------REQUESTS BEGIN------------\n")
+	maxFreeSlots = 0
+
+	for config in configs:
+		allPorts.append(config["port"])
+		numFreeSlotsInAllMachines[config["port"]] = config["slots"]
+
+		# Update if this machine has the maximum number of slots (used for LL scheduling)
+		if(config["slots"] > maxFreeSlots):
+			maxFreeSlotsMachine["port"] = config["port"]
+			maxFreeSlotsMachine["numFreeSlots"] = config["slots"]
+			maxFreeSlots = config["slots"]
+		
 
 
-    try:
-        t1 = threading.Thread(target = listenRequest)
-        t2 = threading.Thread(target = scheduleRequest)
-        t3 = threading.Thread(target = listenToUpdatesFromWorker)
-
-        t1.start()
-        t2.start()
-        t3.start()
-
-        # We don't want to join (stop master till threads finish executing, they don't stop executing)
-
-    except Exception as e:
-        print("Error in starting thread: ", e)
+	if(debug): print("\n----------REQUESTS BEGIN------------\n")
 
 
+	try:
+		t1 = threading.Thread(target = listenRequest)
+		t2 = threading.Thread(target = scheduleRequest)
+		t3 = threading.Thread(target = listenToUpdatesFromWorker)
+
+		t1.start()
+		t2.start()
+		t3.start()
+
+		# We don't want to join (stop master till threads finish executing, they don't stop executing)
+
+	except Exception as e:
+		if(debug): print("Error in starting thread: ", e)
 
