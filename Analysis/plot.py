@@ -1,9 +1,15 @@
+import argparse
 import json
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 
-with open('data.json', "r") as fp:
+parser = argparse.ArgumentParser()
+parser.add_argument('-d', '--data_file', help='Location of data file', required = 'True')
+args = parser.parse_args()
+data_path = args.data_file # location of data.json
+
+with open(data_path, "r") as fp:
 	data = fp.read()
 data = json.loads(data)
 
@@ -70,6 +76,7 @@ for key in data:
 		x_values = list(i.keys())
 		y_values = list(i.values())
 		ax.plot(x_values, y_values ,label = worker)
+		ax.legend()
 		
 	plt.savefig('Graphs/{0}.png'.format(key))
 			

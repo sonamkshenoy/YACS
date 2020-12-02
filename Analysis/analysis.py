@@ -2,14 +2,6 @@ import argparse
 import json
 import numpy as np
 from datetime import datetime
-
-# NOTE: 'data.json' contains the extracted data which is used for plotting necessary graphs
-
-# create the data.json file if it doesn't exist
-from os import path
-if(path.exists('data.json') == False):
-	fp = open('data.json', 'w+')
-	fp.close()
 	
 if __name__ == "__main__":
 
@@ -17,13 +9,22 @@ if __name__ == "__main__":
 	parser.add_argument('-c', '--config', help='Location of configuration file', required = 'True')
 	parser.add_argument('-a', '--algo', help='Scheduling Algorithm', required = 'True')
 	parser.add_argument('-b', '--bin_interval', help='Binning interval', required = 'True')
+	parser.add_argument('-d', '--data_file', help='Location of data file', required = 'True')
 	args = parser.parse_args()
 	
 	config = args.config
 	algo = args.algo
 	bins = int(args.bin_interval)
+	data_path = args.data_file # location of data.json
 	
-	with open('data.json', 'r') as fp:
+	# NOTE: 'data.json' contains the extracted data which is used for plotting necessary graphs	
+	# create the data.json file if it doesn't exist
+	from os import path
+	if(path.exists(data_path) == False):
+		fp = open(data_path, 'w+')
+		fp.close()
+	
+	with open(data_path, 'r') as fp:
 		data = fp.read()
 		
 	# if 'data.json' is empty, create a new dictionary, else read the json file
@@ -114,7 +115,7 @@ if __name__ == "__main__":
 			data[algo]['workers'].append({'id':id, 'mean':np.mean(time)/1000, 'median':np.median(time)/1000, 'schedule':tasks})
 		
 	# write the updated 'data' to json file
-	with open("data.json", "w") as outfile:  
+	with open(data_path, "w") as outfile:  
 		json.dump(data, outfile) 
 				
 	
