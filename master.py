@@ -152,7 +152,7 @@ def scheduleRequest(lock):
 
 
                     while(True):
-                        print(numFreeSlotsInAllMachines)
+                        if(debug): print(numFreeSlotsInAllMachines)
                         # Get machine to execute according to chosen scheduling algorithm
                         selectedWorker = getWorkerId()
 
@@ -192,7 +192,7 @@ def scheduleRequest(lock):
 
 
                     while(True):
-                        print(numFreeSlotsInAllMachines)
+                        if(debug): print(numFreeSlotsInAllMachines)
                         # Get machine to execute according to chosen scheduling algorithm
                         selectedWorker = getWorkerId()
 
@@ -291,7 +291,7 @@ def listenToUpdatesFromWorker(lock):
                 # Push all reduce tasks belonging to that job in queue to be executed (reduce tasks can be executed parallelly)                     
                 queueOfReduceRequests.put(currentJob["reduceTasksInfo"])
 
-            print(numFreeSlotsInAllMachines)
+            if(debug): print(numFreeSlotsInAllMachines)
 
 
 
