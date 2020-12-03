@@ -6,7 +6,6 @@ Big Data Scheduler YACS - "Yet Another Centralized Scheduler"
 ## Folder Structure  
 
 * config.json : Contains the info about worker (worker id, port worker is running on, number of slots in the worker)   
-* allconfigs.py : Common variable names that are used in almost all files   
 * master.py : The main resource scheduler   
 * worker.py : The worker that runs slots for execution of tasks   
 * requests.py : The request generator    

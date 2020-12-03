@@ -4,7 +4,27 @@ import time
 import sys
 import random
 import numpy as np
-from allConfigs import *
+
+# ----------------------------------
+
+# from allConfigs import *
+
+# General variables
+
+# File and variable names
+# CONFIGFILE = "config.json"
+MAINKEYINCONFIG = "workers"
+
+# IPs and Ports
+MASTER_SCHEDULING_PORT = 5000 # Port that listens to requests from request generator and schedules them to workers
+MASTER_UPDATE_PORT = 5001 # Port that listens to updates from workers and executes reduce tasks once done
+MASTER_IP = "localhost"
+WORKER_IP = "localhost"
+
+# Variables
+PORTNUMBER = "portNumber"
+
+# ----------------------------------
 
 def create_job_request(job_id):
 	number_of_map_tasks=random.randrange(1,5)

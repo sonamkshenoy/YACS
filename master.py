@@ -8,8 +8,6 @@ import datetime
 
 from queue import Queue
 
-from allConfigs import *
-
 import logging
 logging.basicConfig(
     level=logging.INFO,
@@ -19,6 +17,30 @@ logging.basicConfig(
     ]
 )
 
+
+# ----------------------------------
+
+# from allConfigs import *
+
+# General variables
+
+# File and variable names
+# CONFIGFILE = "config.json"
+MAINKEYINCONFIG = "workers"
+
+# IPs and Ports
+MASTER_SCHEDULING_PORT = 5000 # Port that listens to requests from request generator and schedules them to workers
+MASTER_UPDATE_PORT = 5001 # Port that listens to updates from workers and executes reduce tasks once done
+MASTER_IP = "localhost"
+WORKER_IP = "localhost"
+
+
+# Variables
+PORTNUMBER = "portNumber"
+
+# ----------------------------------
+
+
 # Initialise scheduling algo to "random"
 SCHEDULING_ALGO = "R"
 
@@ -27,9 +49,14 @@ queueOfRequests = Queue()
 queueOfReduceRequests = Queue()
 allPorts = []
 tasksInProcess = {} # Keeps record of jobs whose map or reduce tasks are still running
-lastUsedWorkerPortIndex = 0 # Used only for Round Robin Scheduling
+lastUsedWorkerPortIndex = 0 # Used only for Round Robin Scheduling (Index of last used port in 'allPorts' variable)
 numFreeSlotsInAllMachines = {}
 jobTotalTime = {}
+
+
+
+
+
 
 # THREAD 1: LISTENS TO REQUESTS (ACTS AS CLIENT)
 
@@ -46,8 +73,8 @@ def listenRequest():
     # "localhost" below only listens to requests from the same system. To access server from a different machine, have to give a globally available IP instead of "localhost"
     mastersocket.bind((MASTER_IP, MASTER_SCHEDULING_PORT))
 
-    # become a server socket, can have 500 requests max in the queue (can we not have a limit?)
-    mastersocket.listen() #(500)
+    # become a server socket
+    mastersocket.listen()
 
     # Once socket is set up, listen and schedule requests
     while True:
@@ -68,7 +95,7 @@ def listenRequest():
 
 
 
-# Returns port number of worker depending on scheduling algo
+# Returns port number of worker depending on scheduling algorithm
 def getWorkerId():
 
     global lastUsedWorkerPortIndex
@@ -85,16 +112,17 @@ def getWorkerId():
 
     # Least Loaded selection
     else:
-        # If max free slots is 0, sleep for 1 second till it finds one
         maxFreeSlots = 0
         maxFreeSlotsMachine = list(numFreeSlotsInAllMachines.keys())[0]
 
         while(True):
+            # Find machine with max free slots
             for machine in numFreeSlotsInAllMachines:
                 if(numFreeSlotsInAllMachines[machine] > maxFreeSlots):
                     maxFreeSlots = numFreeSlotsInAllMachines[machine]
                     maxFreeSlotsMachine = machine
 
+            # If max free slots is 0 => no machine free, sleep for 1 second till it finds one
             if(maxFreeSlots > 0):
                 break
             time.sleep(1)
@@ -152,11 +180,13 @@ def scheduleRequest(lock):
 
 
                     while(True):
-                        if(debug): print(numFreeSlotsInAllMachines)
+                        if(debug): 
+                            print(numFreeSlotsInAllMachines)
+
                         # Get machine to execute according to chosen scheduling algorithm
                         selectedWorker = getWorkerId()
 
-                        # If no free slots, search for a machine with free slot
+                        # If no free slots, search again for a machine with free slot (applicable only for R and RR since LL takes care of it in the function itself)
                         if(numFreeSlotsInAllMachines[selectedWorker] <= 0):
                             continue
                         
@@ -291,7 +321,8 @@ def listenToUpdatesFromWorker(lock):
                 # Push all reduce tasks belonging to that job in queue to be executed (reduce tasks can be executed parallelly)                     
                 queueOfReduceRequests.put(currentJob["reduceTasksInfo"])
 
-            if(debug): print(numFreeSlotsInAllMachines)
+            if(debug): 
+                print(numFreeSlotsInAllMachines)
 
 
 
@@ -313,7 +344,8 @@ if __name__ == "__main__":
     debug = True
     if(len(sys.argv) == 4):
         debug = sys.argv[3]
-        if(debug == 'False'): debug = False
+        if(debug == 'False'): 
+            debug = False
 
 
     if(debug): 

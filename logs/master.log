@@ -122,3 +122,117 @@
 (2020-12-02 11:47:29,472) [FINISH] JOB 18 Finished execution. Total duration - 5046.313
 (2020-12-02 11:47:30,445) [FINISH] JOB 17 Finished execution. Total duration - 7024.825
 (2020-12-02 11:47:30,456) [FINISH] JOB 19 Finished execution. Total duration - 5026.421
+(2020-12-03 22:20:59,188) [START] Job-0 Started Execution
+(2020-12-03 22:20:59,189) [INFO] Allotting task-{'task_id': '0_M0', 'duration': 2} to 4000 [SUCCESS]
+(2020-12-03 22:20:59,189) [INFO] Allotting task-{'task_id': '0_M1', 'duration': 2} to 4000 [SUCCESS]
+(2020-12-03 22:20:59,511) [START] Job-1 Started Execution
+(2020-12-03 22:20:59,512) [INFO] Allotting task-{'task_id': '1_M0', 'duration': 2} to 4000 [SUCCESS]
+(2020-12-03 22:20:59,835) [START] Job-2 Started Execution
+(2020-12-03 22:20:59,836) [INFO] Allotting task-{'task_id': '2_M0', 'duration': 4} to 4000 [SUCCESS]
+(2020-12-03 22:20:59,987) [START] Job-3 Started Execution
+(2020-12-03 22:20:59,988) [INFO] Allotting task-{'task_id': '3_M0', 'duration': 4} to 4001 [SUCCESS]
+(2020-12-03 22:20:59,989) [INFO] Allotting task-{'task_id': '3_M1', 'duration': 3} to 4000 [SUCCESS]
+(2020-12-03 22:20:59,989) [INFO] Allotting task-{'task_id': '3_M2', 'duration': 4} to 4001 [SUCCESS]
+(2020-12-03 22:20:59,990) [INFO] Allotting task-{'task_id': '3_M3', 'duration': 2} to 4000 [SUCCESS]
+(2020-12-03 22:21:01,229) [INFO] Allotting task-{'task_id': '0_R0', 'duration': 1} to 4000 [SUCCESS]
+(2020-12-03 22:21:01,229) [INFO] Allotting task-{'task_id': '0_R1', 'duration': 2} to 4000 [SUCCESS]
+(2020-12-03 22:21:01,526) [INFO] Allotting task-{'task_id': '1_R0', 'duration': 1} to 4000 [SUCCESS]
+(2020-12-03 22:21:02,420) [START] Job-4 Started Execution
+(2020-12-03 22:21:02,421) [INFO] Allotting task-{'task_id': '4_M0', 'duration': 4} to 4000 [SUCCESS]
+(2020-12-03 22:21:02,421) [INFO] Allotting task-{'task_id': '4_M1', 'duration': 1} to 4000 [SUCCESS]
+(2020-12-03 22:21:02,421) [INFO] Allotting task-{'task_id': '4_M2', 'duration': 3} to 4001 [SUCCESS]
+(2020-12-03 22:21:02,539) [FINISH] JOB 1 Finished execution. Total duration - 3027.291
+(2020-12-03 22:21:02,743) [START] Job-5 Started Execution
+(2020-12-03 22:21:02,744) [INFO] Allotting task-{'task_id': '5_M0', 'duration': 4} to 4000 [SUCCESS]
+(2020-12-03 22:21:02,744) [INFO] Allotting task-{'task_id': '5_M1', 'duration': 1} to 4000 [SUCCESS]
+(2020-12-03 22:21:02,804) [START] Job-6 Started Execution
+(2020-12-03 22:21:02,805) [INFO] Allotting task-{'task_id': '6_M0', 'duration': 2} to 4001 [SUCCESS]
+(2020-12-03 22:21:02,805) [INFO] Allotting task-{'task_id': '6_M1', 'duration': 4} to 4000 [SUCCESS]
+(2020-12-03 22:21:02,806) [INFO] Allotting task-{'task_id': '6_M2', 'duration': 1} to 4001 [SUCCESS]
+(2020-12-03 22:21:02,806) [INFO] Allotting task-{'task_id': '6_M3', 'duration': 2} to 4002 [SUCCESS]
+(2020-12-03 22:21:03,047) [START] Job-7 Started Execution
+(2020-12-03 22:21:03,047) [INFO] Allotting task-{'task_id': '7_M0', 'duration': 3} to 4000 [SUCCESS]
+(2020-12-03 22:21:03,047) [INFO] Allotting task-{'task_id': '7_M1', 'duration': 1} to 4000 [SUCCESS]
+(2020-12-03 22:21:03,241) [FINISH] JOB 0 Finished execution. Total duration - 4053.130
+(2020-12-03 22:21:03,449) [START] Job-8 Started Execution
+(2020-12-03 22:21:03,449) [INFO] Allotting task-{'task_id': '8_M0', 'duration': 3} to 4000 [SUCCESS]
+(2020-12-03 22:21:03,450) [INFO] Allotting task-{'task_id': '8_M1', 'duration': 2} to 4000 [SUCCESS]
+(2020-12-03 22:21:03,851) [INFO] Allotting task-{'task_id': '2_R0', 'duration': 3} to 4000 [SUCCESS]
+(2020-12-03 22:21:03,966) [START] Job-9 Started Execution
+(2020-12-03 22:21:03,967) [INFO] Allotting task-{'task_id': '9_M0', 'duration': 3} to 4001 [SUCCESS]
+(2020-12-03 22:21:03,967) [INFO] Allotting task-{'task_id': '9_M1', 'duration': 3} to 4000 [SUCCESS]
+(2020-12-03 22:21:03,968) [INFO] Allotting task-{'task_id': '9_M2', 'duration': 4} to 4001 [SUCCESS]
+(2020-12-03 22:21:03,968) [INFO] Allotting task-{'task_id': '9_M3', 'duration': 4} to 4002 [SUCCESS]
+(2020-12-03 22:21:04,030) [INFO] Allotting task-{'task_id': '3_R0', 'duration': 4} to 4001 [SUCCESS]
+(2020-12-03 22:21:04,139) [START] Job-10 Started Execution
+(2020-12-03 22:21:04,139) [INFO] Allotting task-{'task_id': '10_M0', 'duration': 3} to 4000 [SUCCESS]
+(2020-12-03 22:21:04,140) [INFO] Allotting task-{'task_id': '10_M1', 'duration': 2} to 4001 [SUCCESS]
+(2020-12-03 22:21:04,523) [START] Job-11 Started Execution
+(2020-12-03 22:21:04,523) [INFO] Allotting task-{'task_id': '11_M0', 'duration': 3} to 4000 [SUCCESS]
+(2020-12-03 22:21:04,745) [START] Job-12 Started Execution
+(2020-12-03 22:21:04,746) [INFO] Allotting task-{'task_id': '12_M0', 'duration': 3} to 4001 [SUCCESS]
+(2020-12-03 22:21:04,746) [INFO] Allotting task-{'task_id': '12_M1', 'duration': 3} to 4002 [SUCCESS]
+(2020-12-03 22:21:06,057) [INFO] Allotting task-{'task_id': '7_R0', 'duration': 4} to 4000 [SUCCESS]
+(2020-12-03 22:21:06,150) [START] Job-13 Started Execution
+(2020-12-03 22:21:06,151) [INFO] Allotting task-{'task_id': '13_M0', 'duration': 4} to 4001 [SUCCESS]
+(2020-12-03 22:21:06,151) [INFO] Allotting task-{'task_id': '13_M1', 'duration': 3} to 4001 [SUCCESS]
+(2020-12-03 22:21:06,152) [INFO] Allotting task-{'task_id': '13_M2', 'duration': 3} to 4000 [SUCCESS]
+(2020-12-03 22:21:06,303) [START] Job-14 Started Execution
+(2020-12-03 22:21:06,303) [INFO] Allotting task-{'task_id': '14_M0', 'duration': 2} to 4001 [SUCCESS]
+(2020-12-03 22:21:06,304) [INFO] Allotting task-{'task_id': '14_M1', 'duration': 4} to 4002 [SUCCESS]
+(2020-12-03 22:21:06,436) [INFO] Allotting task-{'task_id': '4_R0', 'duration': 1} to 4000 [SUCCESS]
+(2020-12-03 22:21:06,856) [FINISH] JOB 2 Finished execution. Total duration - 7020.289
+(2020-12-03 22:21:07,438) [INFO] Allotting task-{'task_id': '4_R1', 'duration': 1} to 4000 [SUCCESS]
+(2020-12-03 22:21:07,440) [INFO] Allotting task-{'task_id': '8_R0', 'duration': 1} to 4000 [SUCCESS]
+(2020-12-03 22:21:07,441) [INFO] Allotting task-{'task_id': '8_R1', 'duration': 4} to 4000 [SUCCESS]
+(2020-12-03 22:21:07,441) [INFO] Allotting task-{'task_id': '5_R0', 'duration': 3} to 4000 [SUCCESS]
+(2020-12-03 22:21:07,442) [INFO] Allotting task-{'task_id': '5_R1', 'duration': 4} to 4000 [SUCCESS]
+(2020-12-03 22:21:07,443) [INFO] Allotting task-{'task_id': '6_R0', 'duration': 1} to 4000 [SUCCESS]
+(2020-12-03 22:21:07,443) [INFO] Allotting task-{'task_id': '10_R0', 'duration': 4} to 4000 [SUCCESS]
+(2020-12-03 22:21:07,444) [INFO] Allotting task-{'task_id': '10_R1', 'duration': 3} to 4001 [SUCCESS]
+(2020-12-03 22:21:07,533) [INFO] Allotting task-{'task_id': '11_R0', 'duration': 1} to 4000 [SUCCESS]
+(2020-12-03 22:21:07,786) [INFO] Allotting task-{'task_id': '12_R0', 'duration': 3} to 4001 [SUCCESS]
+(2020-12-03 22:21:08,003) [INFO] Allotting task-{'task_id': '9_R0', 'duration': 1} to 4002 [SUCCESS]
+(2020-12-03 22:21:08,045) [FINISH] JOB 3 Finished execution. Total duration - 8056.756
+(2020-12-03 22:21:08,450) [FINISH] JOB 4 Finished execution. Total duration - 6029.550
+(2020-12-03 22:21:08,512) [FINISH] JOB 6 Finished execution. Total duration - 5707.857
+(2020-12-03 22:21:08,548) [FINISH] JOB 11 Finished execution. Total duration - 4025.608
+(2020-12-03 22:21:08,802) [START] Job-15 Started Execution
+(2020-12-03 22:21:08,802) [INFO] Allotting task-{'task_id': '15_M0', 'duration': 4} to 4000 [SUCCESS]
+(2020-12-03 22:21:09,015) [FINISH] JOB 9 Finished execution. Total duration - 5048.621
+(2020-12-03 22:21:10,072) [FINISH] JOB 7 Finished execution. Total duration - 7024.530
+(2020-12-03 22:21:10,161) [INFO] Allotting task-{'task_id': '13_R0', 'duration': 4} to 4000 [SUCCESS]
+(2020-12-03 22:21:10,161) [INFO] Allotting task-{'task_id': '13_R1', 'duration': 1} to 4001 [SUCCESS]
+(2020-12-03 22:21:10,319) [INFO] Allotting task-{'task_id': '14_R0', 'duration': 4} to 4000 [SUCCESS]
+(2020-12-03 22:21:10,319) [INFO] Allotting task-{'task_id': '14_R1', 'duration': 1} to 4001 [SUCCESS]
+(2020-12-03 22:21:10,799) [FINISH] JOB 12 Finished execution. Total duration - 6053.670
+(2020-12-03 22:21:10,981) [START] Job-16 Started Execution
+(2020-12-03 22:21:10,981) [INFO] Allotting task-{'task_id': '16_M0', 'duration': 3} to 4001 [SUCCESS]
+(2020-12-03 22:21:10,982) [INFO] Allotting task-{'task_id': '16_M1', 'duration': 4} to 4000 [SUCCESS]
+(2020-12-03 22:21:11,455) [FINISH] JOB 8 Finished execution. Total duration - 8005.631
+(2020-12-03 22:21:11,486) [FINISH] JOB 5 Finished execution. Total duration - 8741.885
+(2020-12-03 22:21:11,486) [START] Job-17 Started Execution
+(2020-12-03 22:21:11,487) [FINISH] JOB 10 Finished execution. Total duration - 7348.094
+(2020-12-03 22:21:11,488) [INFO] Allotting task-{'task_id': '17_M0', 'duration': 2} to 4001 [SUCCESS]
+(2020-12-03 22:21:12,235) [START] Job-18 Started Execution
+(2020-12-03 22:21:12,236) [INFO] Allotting task-{'task_id': '18_M0', 'duration': 1} to 4000 [SUCCESS]
+(2020-12-03 22:21:12,237) [INFO] Allotting task-{'task_id': '18_M1', 'duration': 2} to 4000 [SUCCESS]
+(2020-12-03 22:21:12,237) [INFO] Allotting task-{'task_id': '18_M2', 'duration': 1} to 4001 [SUCCESS]
+(2020-12-03 22:21:12,679) [START] Job-19 Started Execution
+(2020-12-03 22:21:12,679) [INFO] Allotting task-{'task_id': '19_M0', 'duration': 4} to 4000 [SUCCESS]
+(2020-12-03 22:21:12,680) [INFO] Allotting task-{'task_id': '19_M1', 'duration': 3} to 4001 [SUCCESS]
+(2020-12-03 22:21:12,680) [INFO] Allotting task-{'task_id': '19_M2', 'duration': 1} to 4000 [SUCCESS]
+(2020-12-03 22:21:12,681) [INFO] Allotting task-{'task_id': '19_M3', 'duration': 1} to 4001 [SUCCESS]
+(2020-12-03 22:21:12,817) [INFO] Allotting task-{'task_id': '15_R0', 'duration': 1} to 4000 [SUCCESS]
+(2020-12-03 22:21:13,500) [INFO] Allotting task-{'task_id': '17_R0', 'duration': 3} to 4001 [SUCCESS]
+(2020-12-03 22:21:13,828) [FINISH] JOB 15 Finished execution. Total duration - 5025.972
+(2020-12-03 22:21:14,175) [FINISH] JOB 13 Finished execution. Total duration - 8024.870
+(2020-12-03 22:21:14,245) [INFO] Allotting task-{'task_id': '18_R0', 'duration': 3} to 4000 [SUCCESS]
+(2020-12-03 22:21:14,328) [FINISH] JOB 14 Finished execution. Total duration - 8025.219
+(2020-12-03 22:21:14,997) [INFO] Allotting task-{'task_id': '16_R0', 'duration': 2} to 4000 [SUCCESS]
+(2020-12-03 22:21:14,997) [INFO] Allotting task-{'task_id': '16_R1', 'duration': 4} to 4000 [SUCCESS]
+(2020-12-03 22:21:16,508) [FINISH] JOB 17 Finished execution. Total duration - 5022.086
+(2020-12-03 22:21:16,694) [INFO] Allotting task-{'task_id': '19_R0', 'duration': 2} to 4000 [SUCCESS]
+(2020-12-03 22:21:17,258) [FINISH] JOB 18 Finished execution. Total duration - 5022.799
+(2020-12-03 22:21:18,701) [FINISH] JOB 19 Finished execution. Total duration - 6022.339
+(2020-12-03 22:21:19,012) [FINISH] JOB 16 Finished execution. Total duration - 8030.814
