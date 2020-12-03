@@ -99,5 +99,5 @@ python3 requests.py 50
 Make sure you have matplotlib installed. If not, run `pip3 install matplotlib`
 ```
 chmod +x Analysis/analyse.sh
-./analyse.sh
+./Analysis/analyse.sh
 ```
