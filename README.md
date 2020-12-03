@@ -92,3 +92,12 @@ python3 requests.py <number of requests>
 Example:
 python3 requests.py 50
 ```
+
+-----
+
+## Steps to run the analysis    
+Make sure you have matplotlib installed. If not, run `pip3 install matplotlib`
+```
+chmod +x Analysis/analyse.sh
+./analyse.sh
+```
